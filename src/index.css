@@ -1,0 +1,543 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Times New Roman', Times, serif;
+    text-align: center;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: beige;
+    padding-top: 3em;
+    padding-bottom: 3em;
+}
+
+.login-container {
+    background-color: lightblue;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 4px 12px 36px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.fejlec {
+    margin-bottom: 2.5em;
+}
+
+.udvozles {
+    font-size: 3em;
+    font-weight: bold;
+    color: blue;
+}
+
+.fejlec h1 {
+    font-size: 1em;
+    color: gray;
+    font-weight: normal;
+}
+
+.login-container h1 {
+    color: blue;
+    font-size: 2.2em;
+    margin-bottom: 0.1em;
+}
+
+.subtitle {
+    color: gray;
+    margin-bottom: 2em;
+    font-size: 1em;
+}
+
+.form-group {
+    text-align: left;
+    margin-bottom: 1em;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    color: black;
+    margin-bottom: 0.5em;
+}
+
+input {
+    width: 100%;
+    padding: 0.75em;
+    border: 2px solid gray;
+    border-radius: 8px;
+    font-size: 1em;
+}
+
+input:focus {
+    border-color: blue;
+    outline: none;
+}
+
+button {
+    width: 100%;
+    padding: 0.75em;
+    background-color: blue;
+    color: beige;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+button:hover {
+    background-color: rgba(0, 0, 255, 0.5);
+}
+
+.error-message {
+    color: red;
+    font-size: 1em;
+    margin-top: 1px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.footer-text {
+    margin-top: 2em;
+    font-size: 0.9em;
+    color: gray;
+}
+
+.hatter {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1em;
+    background-color: lightblue;
+    padding: 1em;
+    border-radius: 16px;
+    box-shadow: 4px 12px 36px;
+    width: 100%;
+    max-width: 1125px;
+    margin: 0 auto;
+    position: relative;
+    flex-wrap: wrap;
+}
+
+.opciok, .nav-sor {
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+}
+
+.opciok a, .nav-sor a {
+    text-decoration: none;
+    color: blue;
+    font-weight: bold;
+    font-size: 1em;
+}
+
+.opciok a:hover, .nav-sor a:hover, .orarend-ora:hover, #kijelentkezesBtn:hover {
+    color: rgba(0, 0, 255, 0.5);
+}
+
+.opciok {
+    background-color: white;
+    padding: 1em;
+    margin: 1.5em 3em 1.5em 3em;
+    border-radius: 16px;
+    width: 160px;
+    height: 160px;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.nav-sor {
+    padding: 0 4em 0 4.5em;
+    width: 100%;
+    max-width: 1000px;
+    background-color: transparent;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.nav-sor a {
+    font-size: x-large;
+    padding: 0.15em 0.5em;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.nav-sor a span {
+    display: flex;
+    margin: auto;
+    padding: 0.1em 0;
+    flex-direction: column;
+    align-items: center;
+}
+
+.emoji {
+    font-size: 4.55em;
+    margin-bottom: 0.1em;
+}
+
+.menu {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2.5em;
+    margin: 2em 0 1em;
+    width: 100%;
+}
+
+.tablazat-container {
+    display: block;
+    background: white;
+    padding: 1.5em;
+    border-radius: 15px;
+    max-width: 1000px;
+    width: 90%;
+    margin: 0 0.5em;
+}
+
+.tablazat {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+    min-width: 700px;
+    border-radius: 10px;
+    overflow: hidden;
+    justify-content: center;
+    vertical-align: center;
+}
+
+.tablazat th {
+    background: blue;
+    color: white;
+    padding: 1em;
+    font-size: 1em;
+    text-transform: uppercase;
+}
+
+.tablazat td {
+    padding: 1em;
+}
+
+.tablazat td:first-child {
+    text-align: center;
+    padding: 0.35em 0.1em 1em 0;
+    width: 150px;
+    font-weight: bold;
+    vertical-align: middle;
+}
+
+.tablazat tr:nth-child(even) {
+    background-color: white;
+}
+
+.tablazat tr:nth-child(odd) {
+    background-color: #eef5ff;
+}
+
+
+.footer-text {
+    text-align: center;
+    margin: 0.15em 0;
+    font-size: 1em;
+    color: #555;
+    width: 100%;
+}
+
+.fokusz-tartalom {
+    display: flex;
+    width: 100%;
+    gap: 1.5em; 
+}
+
+.oldalsav {
+    background-color: transparent;
+    padding: 0.5em;
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.oldalsav button, .oldalsav a {
+    width: 100%;
+    padding: 1em;
+    margin-bottom: .1em;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.oldalsav a {
+    background-color: transparent;
+    color: black;
+}
+
+.uzenet-tartalom {
+    background-color: white;
+    margin: .5em;
+    padding: 1.5em;
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-radius: 8px;
+}
+
+.uzenet-lista table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    border: 1px solid #ddd;
+}
+
+.uzenet-lista th {
+    background-color: lightblue;
+    padding: 1em;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+}
+
+.uzenet-lista tr:hover {
+    background-color: lightblue;
+}
+
+.uzenet-lista td {
+    padding: 1.5em; 
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.uzenet-lista td:first-child {
+    font-weight: bold;
+    color: blue;
+}
+
+.uzenet-vezerelemek {
+    margin-top: 1em;
+    text-align: center;
+}
+
+.jegyek-tablazat {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 1.1em;
+}
+
+.jegyek-tablazat td {
+    padding: 1em;
+    text-align: center;
+}
+
+#uzenetModal, #oraModal, #megtekintModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-tartalom h3 {
+    margin-bottom: 5px;
+    color: blue;
+}
+
+.modal-tartalom p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.modal-gombok {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+    flex-direction: row-reverse;
+}
+
+.modal-gombok button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#kuldes {
+    background-color: blue;
+    color: white;
+}
+
+#megse {
+    background-color: gray;
+    color: white;
+}
+
+#kuldes:hover { background-color: blue; }
+#megse:hover { background-color: gray }
+
+.lapozo {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    margin-top: 1em;
+}
+
+.lapozo .oldalGomb {
+    background-color: white;
+    border: 1px solid gray;
+    padding: 0.4em 0.8em;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.lapozo .oldalGomb:hover {
+    background-color: #d0d0ff;
+}
+
+.lapozo .oldalGomb.aktiv {
+    background-color: blue;
+    color: white;
+    border-color: blue;
+}
+
+#kijelentkezesBtn {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    background: none;
+    color: blue;
+    border: none;              
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: right;
+}
+
+
+#megtekintModal .modal-tartalom, #uzenetModal .modal-tartalom, #oraModal .modal-tartalom {
+    background: white;
+    padding: 20px 25px;
+    border-radius: 12px;
+    width: 380px;
+    display: flex;
+    color: black;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#megtekintModal .data, #oraModal .data {
+    color: blue;
+    font-weight: bold;
+}
+
+#megtekintModal h2 {
+    color: blue;
+    margin-bottom: 10px;
+}
+
+#megtekintModal p {
+    margin: 0;
+    line-height: 1.5;
+    text-align: left;
+    width: 100%;
+}
+
+#megtekintModal .close, #uzenetModal .close, #oraModal .close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 2.5em;
+    font-weight: bold;
+    color: gray;
+    cursor: pointer;
+}
+
+#megtekintModal .close:hover, #uzenetModal .close:hover, #oraModal .close:hover {
+    color: red;
+}
+
+#oraModal, #megtekintModal, #uzenetModal {
+    background-color: rgba(0, 0, 0, 0.75) !important;
+}
+
+
+.orarend-ora {
+  background-color: lightblue;
+  cursor: pointer;
+  color: blue;
+}
+
+
+.aktualis-nap {
+    background-color: rgb(133, 145, 150) !important;
+    color: blue !important;
+    font-style: italic;
+}
+
+.aktualis-nap-fejlec{
+    background-color: rgb(0, 0, 100) !important;
+}
+
+.aktualis-nap:hover{
+    color: rgb(0, 0, 255, 0.5) !important;
+}
+
+
+@media (max-width: 480px) {
+    .menu {
+        flex-direction: column;
+        gap: 1em;
+    }
+
+    .oldalcim {
+        font-size: 2em;
+    }
+
+    .orarend {
+        min-width: 500px;
+        font-size: 1em;
+    }
+    
+    .login-container {
+        margin: 1em;
+        padding: 2em;
+    }
+
+    .uzenet-lista td {
+        font-size: 0.9em;
+        padding: 1em;
+    }
+}
