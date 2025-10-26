@@ -1,46 +1,62 @@
 // ...existing code...
 import { useEffect, useState } from "react";
 import "./index.css";
+import axios from "axios";
+import { useNavigate } from "react-router";
 
 type Profile = {
-  nev: string;
-  azonosito: string;
-  anyjaNeve: string;
-  szuletesiHely: string;
-  szuletesiIdo: string;
-  telefon: string;
-  email: string;
-  kepzes: string;
-  kezdes: string;
-  felev: number;
-  varhatoVegzes: string;
-};
+    id: number
+    firstName: string
+    lastName: string
+    email: string
+    birthDate: string | null
+    role: string
+    departmentName: string
+    fullName: string
+    
+}
+
 
 export default function Adatok() {
   const [adatok, setAdatok] = useState<Profile | null>(null);
+  const navigate = useNavigate()
+  const token = localStorage.getItem("token")
 
-  const kijelentkezes = () => {
-    console.log("Kijelentkezés...");
-    // token törlés vagy navigate("/login")
+  const kijelentkezes = async () => {
+    const response = await axios.post("http://localhost:8080/api/auth/logout",{
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    )
+    if (!response) return
+    localStorage.removeItem("token");
+    navigate("/")
   };
 
   useEffect(() => {
-    // Példaadatok, később API-ról jöhetnek
-    const data: Profile = {
-      nev: "Kiss Ákos",
-      azonosito: "HA123456",
-      anyjaNeve: "Nagy Mária",
-      szuletesiHely: "Budapest",
-      szuletesiIdo: "2003.05.17",
-      telefon: "+36 30 123 4567",
-      email: "kiss.akos@example.com",
-      kepzes: "Programtervező informatikus BSc",
-      kezdes: "2023.09.01",
-      felev: 4,
-      varhatoVegzes: "2026.06.30",
-    };
-    setAdatok(data);
-  }, []);
+  const fetchCurrentUser = async () => {
+    try {
+      if (!token) {
+        setAdatok(null);
+        return;
+      }
+      const response = await axios.get("http://localhost:8080/api/users/getCurrentUser", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response?.data) {
+        setAdatok(response.data);
+      } else {
+        setAdatok(null);
+      }
+    } catch (error) {
+      console.error("Felhasználó lekérése sikertelen:", error);
+      setAdatok(null);
+    }
+  };
+
+  fetchCurrentUser();
+}, [token]);
 
   if (!adatok) {
     return (
@@ -77,47 +93,23 @@ export default function Adatok() {
         <tbody>
           <tr>
             <td>Teljes név</td>
-            <td>{adatok.nev}</td>
+            <td>{adatok.fullName}</td>
           </tr>
           <tr>
             <td>Hallgatói azonosító</td>
-            <td>{adatok.azonosito}</td>
-          </tr>
-          <tr>
-            <td>Anyja neve</td>
-            <td>{adatok.anyjaNeve}</td>
-          </tr>
-          <tr>
-            <td>Születés helye</td>
-            <td>{adatok.szuletesiHely}</td>
+            <td>{adatok.id}</td>
           </tr>
           <tr>
             <td>Születés ideje</td>
-            <td>{adatok.szuletesiIdo}</td>
-          </tr>
-          <tr>
-            <td>Telefon</td>
-            <td>{adatok.telefon}</td>
+            <td>{adatok.birthDate}</td>
           </tr>
           <tr>
             <td>E-mail cím</td>
             <td>{adatok.email}</td>
           </tr>
           <tr>
-            <td>Képzés neve</td>
-            <td>{adatok.kepzes}</td>
-          </tr>
-          <tr>
-            <td>Kezdés időpontja</td>
-            <td>{adatok.kezdes}</td>
-          </tr>
-          <tr>
-            <td>Elkezdett félévek</td>
-            <td>{adatok.felev}</td>
-          </tr>
-          <tr>
-            <td>Várható végzés</td>
-            <td>{adatok.varhatoVegzes}</td>
+            <td>Osztály</td>
+            <td>{adatok.departmentName}</td>
           </tr>
         </tbody>
       </table>
