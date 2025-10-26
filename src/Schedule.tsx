@@ -1,60 +1,120 @@
 // ...existing code...
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./index.css";
+import axios from "axios";
+import { useNavigate } from "react-router";
 
-type Lesson = {
-  targy: string;
-  tema: string;
-  tanar: string;
-  terem: string;
+type CourseApi = {
+  id: number;
+  name: string;
+  day: string;
+  duration: string;
+  teacherName: string;
+  departmentName: string;
 };
+
+type CourseCell = CourseApi | null;
 
 type ScheduleRow = {
-  idopont: string;
-  hetfo: Lesson | null;
-  kedd: Lesson | null;
-  szerda: Lesson | null;
-  csutortok: Lesson | null;
-  pentek: Lesson | null;
+  duration: string;
+  hetfo: CourseCell;
+  kedd: CourseCell;
+  szerda: CourseCell;
+  csutortok: CourseCell;
+  pentek: CourseCell;
 };
 
-export default function Schedule() {
-  const [showModal, setShowModal] = useState(false);
-  const [selectedOra, setSelectedOra] = useState<Lesson | null>(null);
+type DayKey = Exclude<keyof ScheduleRow, "duration">;
 
-  const kijelentkezes = () => {
-    console.log("Kijelentkezés...");
-    // Ide jöhet pl. token törlés, navigate("/login")
+export default function Schedule() {
+  const [rows, setRows] = useState<ScheduleRow[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<CourseApi | null>(null);
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+
+  const kijelentkezes = async () => {
+    try {
+      await axios.post(
+        "http://localhost:8080/api/auth/logout",
+        {},
+        {
+          headers: { Authorization: token ? `Bearer ${token}` : "" },
+        }
+      );
+    } catch (err) {
+      console.warn("Logout request failed:", err);
+    } finally {
+      localStorage.removeItem("token");
+      navigate("/");
+    }
   };
 
-  // Mintaadat órákhoz
-  const orak: ScheduleRow[] = [
-    {
-      idopont: "8:00 - 10:00",
-      hetfo: { targy: "Matematika", tema: "Integrálszámítás", tanar: "Kovács Béla", terem: "A101" },
-      kedd: null,
-      szerda: { targy: "Programozás", tema: "Java bevezetés", tanar: "Szabó Anna", terem: "B203" },
-      csutortok: null,
-      pentek: null,
-    },
-    {
-      idopont: "10:00 - 12:00",
-      hetfo: null,
-      kedd: { targy: "Történelem", tema: "Középkor", tanar: "Varga István", terem: "C302" },
-      szerda: null,
-      csutortok: null,
-      pentek: null,
-    },
-  ];
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        if (!token) {
+          setRows([]);
+          return;
+        }
+        const resp = await axios.get<CourseApi[]>(
+          "http://localhost:8080/api/course/getCourseByDepartmentName",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const courses = Array.isArray(resp.data) ? resp.data : [];
 
-  const handleCellClick = (ora: Lesson | null) => {
-    if (!ora) return;
-    setSelectedOra(ora);
+        // build unique durations preserving first appearance order
+        const durations: string[] = [];
+        for (const c of courses) {
+          if (!durations.includes(c.duration)) durations.push(c.duration);
+        }
+
+        const mapDayToKey = (day: string): DayKey => {
+          const d = day.trim().toLowerCase();
+          if (d.startsWith("hét") || d === "hetfo" || d === "hétfő") return "hetfo";
+          if (d.startsWith("ked")) return "kedd";
+          if (d.startsWith("sze")) return "szerda";
+          if (d.startsWith("csü") || d.startsWith("csu") || d.startsWith("csüt")) return "csutortok";
+          if (d.startsWith("pén") || d.startsWith("pen")) return "pentek";
+          return "kedd";
+        };
+
+        const builtRows: ScheduleRow[] = durations.map((duration) => {
+          const base: ScheduleRow = {
+            duration,
+            hetfo: null,
+            kedd: null,
+            szerda: null,
+            csutortok: null,
+            pentek: null,
+          };
+          for (const c of courses) {
+            if (c.duration !== duration) continue;
+            const key = mapDayToKey(c.day);
+            base[key] = c;
+          }
+          return base;
+        });
+
+        setRows(builtRows);
+      } catch (error) {
+        console.error("Schedule fetch failed:", error);
+        setRows([]);
+      }
+    };
+
+    fetchSchedule();
+  }, [token]);
+
+  const handleCellClick = (course: CourseApi | null) => {
+    if (!course) return;
+    setSelectedCourse(course);
     setShowModal(true);
   };
 
   return (
-    // ...existing JSX unchanged...
     <div className="hatter">
       <button id="kijelentkezesBtn" onClick={kijelentkezes}>
         Kijelentkezés
@@ -90,50 +150,46 @@ export default function Schedule() {
             </tr>
           </thead>
           <tbody>
-            {orak.map((sor, index) => (
-              <tr key={index}>
-                <td>{sor.idopont}</td>
-                <td onClick={() => handleCellClick(sor.hetfo)}>
-                  {sor.hetfo?.targy || ""}
-                </td>
-                <td onClick={() => handleCellClick(sor.kedd)}>
-                  {sor.kedd?.targy || ""}
-                </td>
-                <td onClick={() => handleCellClick(sor.szerda)}>
-                  {sor.szerda?.targy || ""}
-                </td>
-                <td onClick={() => handleCellClick(sor.csutortok)}>
-                  {sor.csutortok?.targy || ""}
-                </td>
-                <td onClick={() => handleCellClick(sor.pentek)}>
-                  {sor.pentek?.targy || ""}
-                </td>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={6}>Nincs elérhető órarend</td>
               </tr>
-            ))}
+            ) : (
+              rows.map((r, i) => (
+                <tr key={i}>
+                  <td>{r.duration}</td>
+                  <td onClick={() => handleCellClick(r.hetfo)}>{r.hetfo?.name || ""}</td>
+                  <td onClick={() => handleCellClick(r.kedd)}>{r.kedd?.name || ""}</td>
+                  <td onClick={() => handleCellClick(r.szerda)}>{r.szerda?.name || ""}</td>
+                  <td onClick={() => handleCellClick(r.csutortok)}>{r.csutortok?.name || ""}</td>
+                  <td onClick={() => handleCellClick(r.pentek)}>{r.pentek?.name || ""}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
-      {showModal && selectedOra && (
+      {showModal && selectedCourse && (
         <div className="modal">
           <div className="modal-tartalom">
             <span className="close" onClick={() => setShowModal(false)}>
               &times;
             </span>
             <h2 id="oraTargy" style={{ color: "blue" }}>
-              {selectedOra.targy}
+              {selectedCourse.name}
             </h2>
             <p>
-              <span className="data">Óra témája:</span>{" "}
-              <span id="oraCim">{selectedOra.tema}</span>
+              <span className="data">Nap:</span> <span>{selectedCourse.day}</span>
             </p>
             <p>
-              <span className="data">Oktató:</span>{" "}
-              <span id="oraTanar">{selectedOra.tanar}</span>
+              <span className="data">Időtartam:</span> <span>{selectedCourse.duration}</span>
             </p>
             <p>
-              <span className="data">Terem:</span>{" "}
-              <span id="oraTerem">{selectedOra.terem}</span>
+              <span className="data">Oktató:</span> <span>{selectedCourse.teacherName}</span>
+            </p>
+            <p>
+              <span className="data">Osztály / csoport:</span> <span>{selectedCourse.departmentName}</span>
             </p>
           </div>
         </div>

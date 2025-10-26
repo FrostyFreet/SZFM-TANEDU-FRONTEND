@@ -35,27 +35,27 @@ export default function Adatok() {
   };
 
   useEffect(() => {
-  const fetchCurrentUser = async () => {
-    try {
-      if (!token) {
+    const fetchCurrentUser = async () => {
+        try {
+        if (!token) {
+            setAdatok(null);
+            return;
+        }
+        const response = await axios.get("http://localhost:8080/api/users/getCurrentUser", {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response?.data) {
+            setAdatok(response.data);
+        } else {
+            setAdatok(null);
+        }
+        } catch (error) {
+        console.error("Felhasználó lekérése sikertelen:", error);
         setAdatok(null);
-        return;
-      }
-      const response = await axios.get("http://localhost:8080/api/users/getCurrentUser", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response?.data) {
-        setAdatok(response.data);
-      } else {
-        setAdatok(null);
-      }
-    } catch (error) {
-      console.error("Felhasználó lekérése sikertelen:", error);
-      setAdatok(null);
-    }
-  };
+        }
+    };
 
-  fetchCurrentUser();
+    fetchCurrentUser();
 }, [token]);
 
   if (!adatok) {
@@ -118,4 +118,3 @@ export default function Adatok() {
     </div>
   );
 }
-// ...existing code...

@@ -1,6 +1,8 @@
 // ...existing code...
 import { useState, useEffect } from "react";
 import "./index.css";
+import { useNavigate } from "react-router";
+import axios from "axios";
 
 type Grade = {
   targy: string;
@@ -11,13 +13,22 @@ type Grade = {
 
 export default function Grades() {
   const [jegyek, setJegyek] = useState<Grade[]>([]);
+  const navigate = useNavigate()
+  const token = localStorage.getItem("token")
 
-  const kijelentkezes = () => {
-    console.log("Kijelentkezés...");
-    // ide jöhet pl. token törlés, navigate("/login")
+
+  const kijelentkezes = async () => {
+    const response = await axios.post("http://localhost:8080/api/auth/logout",{
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    )
+    if (!response) return
+    localStorage.removeItem("token");
+    navigate("/")
   };
 
-  // Mintaadatok (később backendről jöhetnek)
   useEffect(() => {
     const data: Grade[] = [
       { targy: "Matematika", jegy: 5, datum: "2025.02.14", megjegyzes: "Kiváló dolgozat" },

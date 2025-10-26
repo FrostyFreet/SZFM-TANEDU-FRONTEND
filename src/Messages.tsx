@@ -1,9 +1,13 @@
 import { useState } from "react";
 import "./index.css";
+import { useNavigate } from "react-router";
+import axios from "axios";
 
 export default function Uzenetek() {
   const [showNewMsgModal, setShowNewMsgModal] = useState(false);
   const [showViewMsgModal, setShowViewMsgModal] = useState(false);
+  const navigate = useNavigate()
+  const token = localStorage.getItem("token")
 
   const [formData, setFormData] = useState({
     cimzett: "",
@@ -22,9 +26,16 @@ export default function Uzenetek() {
     setFormData({ cimzett: "", targy: "", uzenet: "" });
   };
 
-  const kijelentkezes = () => {
-    console.log("Kijelentkezés...");
-    // ide jönne pl. token törlés, navigate("/login")
+  const kijelentkezes = async () => {
+    const response = await axios.post("http://localhost:8080/api/auth/logout",{
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    )
+    if (!response) return
+    localStorage.removeItem("token");
+    navigate("/")
   };
 
   return (
