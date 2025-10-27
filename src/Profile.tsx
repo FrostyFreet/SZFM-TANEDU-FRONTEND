@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import {
   Box,
   Typography,
@@ -20,17 +19,9 @@ import {
   Container,
 } from '@mui/material';
 import AppBarNav from './components/AppBarNav';
+import { userAPI, authAPI } from "./API/ApiCalls";
+import type { Profile } from "./types/Profile";
 
-type Profile = {
-    id: number
-    firstName: string
-    lastName: string
-    email: string
-    birthDate: string | null
-    role: string
-    departmentName: string
-    fullName: string
-}
 
 export default function Adatok() {
   const [adatok, setAdatok] = useState<Profile | null>(null);
@@ -49,9 +40,7 @@ export default function Adatok() {
       return;
     }
     try {
-      await axios.put("http://localhost:8080/api/auth/change-password", {
-        password: passwordData.newPassword,
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      await authAPI.changePassword(passwordData.newPassword);
       setPasswordMessage({ type: 'success', message: "Jelszó sikeresen megváltoztatva!" });
       setTimeout(() => {
         setShowChangePassword(false);
@@ -65,27 +54,25 @@ export default function Adatok() {
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
-        try {
+      try {
         if (!token) {
-            setAdatok(null);
-            return;
+          setAdatok(null);
+          return;
         }
-        const response = await axios.get("http://localhost:8080/api/users/getCurrentUser", {
-            headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await userAPI.getCurrentUser();
         if (response?.data) {
-            setAdatok(response.data);
+          setAdatok(response.data);
         } else {
-            setAdatok(null);
+          setAdatok(null);
         }
-        } catch (error) {
+      } catch (error) {
         console.error("Felhasználó lekérése sikertelen:", error);
         setAdatok(null);
-        }
+      }
     };
 
     fetchCurrentUser();
-}, [token]);
+  }, [token]);
 
   if (!adatok) {
     return (

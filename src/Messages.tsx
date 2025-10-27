@@ -17,27 +17,8 @@ import {
 } from '@mui/material';
 import AppBarNav from './components/AppBarNav';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
-
-type Message = {
-  id: number;
-  message: string;
-  senderId: number;
-  senderFullName: string;
-  receiverId: number;
-  receiverFullName: string;
-  receiverEmail:string
-  senderEmail:string
-  createdAt: string;
-};
-
-type Conversation = {
-  otherUserId: number;
-  otherUserName: string;
-  otherUserEmail:string;
-  messages: Message[];
-  unreadCount: number;
-};
+import { userAPI, messageAPI } from "./API/ApiCalls";
+import type { Conversation, Message } from "./types/Messages";
 
 export default function Messages() {
   const [showNewMsgModal, setShowNewMsgModal] = useState(false);
@@ -53,45 +34,21 @@ export default function Messages() {
     uzenet: "",
   });
 
-  const fetchCurrentUser = async (): Promise<number | null> => {
-    if (!token) return null;
-    try {
-      const response = await axios.get("http://localhost:8080/api/users/getCurrentUser", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return response?.data?.id ?? null;
-    } catch (err) {
-      console.error("Current user fetch failed:", err);
-      return null;
-    }
-  };
-  
-  const fetchAllTeachers = async (): Promise<string[]> => {
-    if (!token) return [];
-    try {
-      const response = await axios.get("http://localhost:8080/api/users/getAllTeachersEmail", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return Array.isArray(response.data) ? response.data : [];
-    } catch (err) {
-      console.error("Teachers fetch failed:", err);
-      return [];
-    }
-  };
-
   const { data: fetchedUserId } = useQuery({
     queryKey: ["currentUser", token],
-    queryFn: fetchCurrentUser,
+    queryFn: async () => {
+      const response = await userAPI.getCurrentUser();
+      return response?.data?.id ?? null;
+    },
     enabled: !!token,
   });
 
   const { data: teachersEmailList = [] } = useQuery({
     queryKey: ["teachersEmail", token],
-    queryFn: fetchAllTeachers,
+    queryFn: async () => {
+      const response = await userAPI.getAllTeachersEmail();
+      return Array.isArray(response.data) ? response.data : [];
+    },
     enabled: !!token,
   });
 
@@ -101,80 +58,54 @@ export default function Messages() {
     }
   }, [fetchedUserId]);
 
-  const fetchMessages = async (): Promise<Message[]> => {
-    if (!token) return [];
-    try {
-      const response = await axios.get("http://localhost:8080/api/messages/getMessagesByCurrentUser", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return Array.isArray(response.data) ? response.data : [];
-    } catch (err) {
-      console.error("Messages fetch failed:", err);
-      return [];
-    }
-  };
-
   const { data: fetchedMessages, isLoading, refetch } = useQuery({
     queryKey: ["messages", token],
-    queryFn: fetchMessages,
+    queryFn: async () => {
+      const response = await messageAPI.getMessagesByCurrentUser();
+      return Array.isArray(response.data) ? response.data : [];
+    },
     enabled: !!token,
   });
 
-  // Group messages into conversations
   useEffect(() => {
-  if (fetchedMessages && currentUserId) {
-    console.log("Current User ID:", currentUserId);
-    console.log("Fetched Messages:", fetchedMessages);
-    
-    const conversationMap = new Map<number, Message[]>();
-    
-    fetchedMessages.forEach((msg: Message) => {
-      const otherUserId = msg.senderId === currentUserId ? msg.receiverId : msg.senderId;
-      
-      if (!conversationMap.has(otherUserId)) {
-        conversationMap.set(otherUserId, []);
-      }
-      conversationMap.get(otherUserId)!.push(msg);
-    });
+    if (fetchedMessages && currentUserId) {
+      const conversationMap = new Map<number, Message[]>();
 
-    const convos: Conversation[] = Array.from(conversationMap.entries()).map(([userId, msgs]) => {
-      const firstMsg = msgs[0];
-      const isCurrentUserSender = firstMsg.senderId === currentUserId;
+      fetchedMessages.forEach((msg: Message) => {
+        const otherUserId = msg.senderId === currentUserId ? msg.receiverId : msg.senderId;
 
-      return {
-        otherUserId: userId,
-        otherUserName: isCurrentUserSender ? firstMsg.receiverFullName : firstMsg.senderFullName,
-        otherUserEmail: isCurrentUserSender ? firstMsg.receiverEmail : firstMsg.senderEmail, // ✅ Extract email
-        messages: msgs.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
-        unreadCount: 0,
-      };
-    });
+        if (!conversationMap.has(otherUserId)) {
+          conversationMap.set(otherUserId, []);
+        }
+        conversationMap.get(otherUserId)!.push(msg);
+      });
 
-    console.log("Conversations:", convos);
-    setConversations(convos.sort((a, b) => new Date(b.messages[b.messages.length - 1].createdAt).getTime() - new Date(a.messages[a.messages.length - 1].createdAt).getTime()));
-  }
-}, [fetchedMessages, currentUserId]);
+      const convos: Conversation[] = Array.from(conversationMap.entries()).map(([userId, msgs]) => {
+        const firstMsg = msgs[0];
+        const isCurrentUserSender = firstMsg.senderId === currentUserId;
+
+        return {
+          otherUserId: userId,
+          otherUserName: isCurrentUserSender ? firstMsg.receiverFullName : firstMsg.senderFullName,
+          otherUserEmail: isCurrentUserSender ? firstMsg.receiverEmail : firstMsg.senderEmail,
+          messages: msgs.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+          unreadCount: 0,
+        };
+      });
+
+      setConversations(convos.sort((a, b) => new Date(b.messages[b.messages.length - 1].createdAt).getTime() - new Date(a.messages[a.messages.length - 1].createdAt).getTime()));
+    }
+  }, [fetchedMessages, currentUserId]);
 
   const handleSend = async (e: any) => {
     e.preventDefault();
     if (!formData.cimzett || !formData.uzenet) return;
 
     try {
-      await axios.post(
-        "http://localhost:8080/api/messages/sendMessage",
-        {
-          receiver: {
-            email: formData.cimzett,
-          },
-          message: formData.uzenet,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await messageAPI.sendMessage(formData.cimzett, formData.uzenet);
       setShowNewMsgModal(false);
       setFormData({ cimzett: null, uzenet: "" });
-      await refetch()
+      await refetch();
       queryClient.invalidateQueries({ queryKey: ["messages"] });
     } catch (err) {
       console.error("Send failed:", err);
@@ -185,18 +116,9 @@ export default function Messages() {
     if (!replyText || !selectedConversation) return;
 
     try {
-      await axios.post(
-        "http://localhost:8080/api/messages/sendMessage",
-        {
-           receiver: {
-            email: selectedConversation?.otherUserEmail,
-          },
-          message: replyText,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await messageAPI.sendMessage(selectedConversation.otherUserEmail, replyText);
       setReplyText("");
-      await refetch()
+      await refetch();
       queryClient.invalidateQueries({ queryKey: ["messages"] });
     } catch (err) {
       console.error("Reply failed:", err);
@@ -257,7 +179,6 @@ export default function Messages() {
             </Paper>
           ) : (
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '300px 1fr' }, gap: 2 }}>
-              {/* Conversation List */}
               <Paper sx={{ borderRadius: '12px', overflow: 'hidden', height: 'fit-content' }}>
                 <Box sx={{ p: 2, bgcolor: 'primary.main' }}>
                   <Typography sx={{ color: '#fff', fontWeight: 700 }}>Beszélgetések</Typography>
@@ -306,18 +227,15 @@ export default function Messages() {
                 </Box>
               </Paper>
 
-              {/* Message Thread */}
               <Paper sx={{ borderRadius: '12px', display: 'flex', flexDirection: 'column', height: '600px' }}>
                 {selectedConversation ? (
                   <>
-                    {/* Header */}
                     <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', bgcolor: 'primary.light' }}>
                       <Typography sx={{ fontWeight: 700, color: '#fff' }}>
                         💬 {selectedConversation.otherUserName}
                       </Typography>
                     </Box>
 
-                    {/* Messages */}
                     <Box sx={{ flex: 1, overflowY: 'auto', p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                       {selectedConversation.messages.map((msg, idx) => {
                         const isCurrentUserSender = msg.senderId === currentUserId;
@@ -348,7 +266,6 @@ export default function Messages() {
                       })}
                     </Box>
 
-                    {/* Reply Input */}
                     <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0', display: 'flex', gap: 1 }}>
                       <TextField
                         placeholder="Írj egy üzenetet..."
@@ -359,10 +276,10 @@ export default function Messages() {
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
                       />
-                      <Button 
-                        variant="contained" 
-                        color="primary" 
-                        onClick={handleReply} 
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleReply}
                         disabled={!replyText}
                       >
                         Küldés
@@ -379,7 +296,6 @@ export default function Messages() {
           )}
         </Box>
 
-        {/* Send Message Dialog */}
         <Dialog
           open={showNewMsgModal}
           onClose={handleCloseDialog}

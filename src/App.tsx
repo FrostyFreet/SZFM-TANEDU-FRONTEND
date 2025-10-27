@@ -7,9 +7,9 @@ import Schedule from "./Schedule"
 import Profile from "./Profile"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { createContext, useEffect, useState } from "react"
-import axios from "axios"
 import { useQuery } from "@tanstack/react-query"
 import { Box } from "@mui/material"
+import { userAPI, authAPI } from "./API/ApiCalls"
 
 export const RoleContext = createContext<{
   role: string | null;
@@ -21,6 +21,7 @@ export const RoleContext = createContext<{
 function App() {
   const [role, setRole] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!localStorage.getItem("token"));
+  const [isValid, setIsValid] = useState<boolean>(true); 
 
   const token = localStorage.getItem("token");
 
@@ -30,6 +31,7 @@ function App() {
       setIsLoggedIn(!!newToken);
       if (!newToken) {
         setRole(null);
+        setIsValid(true); 
       }
     };
 
@@ -40,33 +42,66 @@ function App() {
   const fetchRole = async (): Promise<string | null> => {
     if (!token && !isLoggedIn) return null;
     try {
-      const response = await axios.get("http://localhost:8080/api/users/getCurrentUserRole", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await userAPI.getCurrentUserRole();
       return response?.data ?? null;
     } catch (err) {
       console.error("Role fetch failed:", err);
+      setIsValid(false); 
       return null;
     }
   };
 
   const { data: fetchedRole } = useQuery({
     queryKey: ["role", token],
-    queryFn: fetchRole, 
+    queryFn: fetchRole,
     enabled: !!token,
   });
-  
+
+  const isTokenValid = async () => {
+    if (!token && !isLoggedIn) return null;
+    try {
+      const response = await authAPI.checkToken();
+      return response?.data ?? null;
+    } catch (err) {
+      console.error("Token validation failed:", err);
+      setIsValid(false);
+      return null;
+    }
+  };
+
+  const { data: isValidToken } = useQuery({
+    queryKey: ["validToken", token],
+    queryFn: isTokenValid,
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000, 
+  });
+
   useEffect(() => {
-    if (fetchedRole) setRole(fetchedRole);
+    if (isValidToken !== undefined) {
+      setIsValid(isValidToken?.valid === true);
+    }
+  }, [isValidToken]);
+
+  useEffect(() => {
+    if (fetchedRole) {
+      setRole(fetchedRole);
+    }
   }, [fetchedRole]);
 
+  useEffect(() => {
+    if (!isValid && token) {
+      localStorage.removeItem("token");
+      setIsLoggedIn(false);
+      setRole(null);
+    }
+  }, [isValid, token]);
+
+  
   return (
     <RoleContext.Provider value={{ role, setRole, isLoggedIn, setIsLoggedIn }}>
       <Box sx={{ minHeight: '100vh' }}>
         <Routes>
-          {isLoggedIn ? (
+          {isLoggedIn && isValid ? (
             <>
               <Route path="/" element={<Navigate to="/home" replace />} />
               <Route 
