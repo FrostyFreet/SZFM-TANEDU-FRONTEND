@@ -89,7 +89,7 @@ export const courseAPI = {
     teacherName: string;
     departmentName: string;
   }) =>
-    axios.post(`${API_BASE_URL}/course/createCourse`, courseData, {
+    axios.post(`${API_BASE_URL}/course/create`, courseData, {
       headers: getAuthHeaders(),
     }),
 
