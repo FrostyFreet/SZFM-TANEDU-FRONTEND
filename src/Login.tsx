@@ -1,8 +1,8 @@
 import { useState, useContext } from "react";
-import axios from 'axios'
 import { useNavigate } from "react-router";
 import { Box, TextField, Button, Typography, Paper, Alert, Container } from '@mui/material';
 import { RoleContext } from "./App";
+import { authAPI } from "./API/ApiCalls";
 
 export default function Login() {
   const [email, setEmail] = useState("")
@@ -11,27 +11,24 @@ export default function Login() {
   const navigate = useNavigate()
   const roleContext = useContext(RoleContext);
 
-  const handleSubmit = async (e:any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     if (!email || !password) {
       setErrorMsg("Minden mezőt ki kell tölteni!");
       return;
     }
-    try{
-        const response = await axios.post("http://localhost:8080/api/auth/login",{
-            "email":email,
-            "password":password
-        })
-        if (response && response.data.token){
-            localStorage.setItem("token",response.data.token)
-            roleContext?.setIsLoggedIn(true);
-            navigate("/home")
-        }
-        setEmail("")
-        setPassword("")
+    try {
+      const response = await authAPI.login(email, password);
+      if (response && response.data.token) {
+        localStorage.setItem("token", response.data.token)
+        roleContext?.setIsLoggedIn(true);
+        navigate("/home")
+      }
+      setEmail("")
+      setPassword("")
     }
-    catch(e){
-         setErrorMsg("Hibás email/jelszó!");
+    catch (e) {
+      setErrorMsg("Hibás email/jelszó!");
     }
   };
 
@@ -60,7 +57,7 @@ export default function Login() {
           <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
             Kérlek, jelentkezz be a folytatáshoz
           </Typography>
-          
+
           <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               label="Email"
@@ -95,7 +92,7 @@ export default function Login() {
               </Alert>
             )}
           </Box>
-          
+
           <Typography variant="body2" sx={{ mt: 4, color: 'text.secondary' }}>
             © 2025 TanEdu | Hallgatói rendszer
           </Typography>

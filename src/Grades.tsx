@@ -17,39 +17,26 @@ import {
 import AppBarNav from './components/AppBarNav';
 import type { Grade } from "./types/Grade";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { gradeAPI } from "./API/ApiCalls";
 
 export default function Grades() {
   const [jegyek, setJegyek] = useState<Grade[]>([]);
   const token = localStorage.getItem("token");
 
-  const fetchGrades = async (): Promise<Grade[]> => {
-    if (!token) return [];
-    try {
-      const response = await axios.get("http://localhost:8080/api/grade/getAllByCurrentUser", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    
+  const { data: fetchedGrades, isLoading } = useQuery({
+    queryKey: ["grades", token],
+    queryFn: async () => {
+      const response = await gradeAPI.getAllByCurrentUser();
       if (Array.isArray(response.data)) {
         return response.data.map((item: any) => ({
           targy: item.comment || "Ismeretlen",
           jegy: item.value || 0,
-          datum: new Date().toLocaleDateString('hu-HU'), 
+          datum: new Date().toLocaleDateString('hu-HU'),
           megjegyzes: item.teacherName || "Nincs megjegyzés",
         }));
       }
       return [];
-    } catch (err) {
-      console.error("Grades fetch failed:", err);
-      return [];
-    }
-  };
-
-  const { data: fetchedGrades, isLoading } = useQuery({
-    queryKey: ["grades", token],
-    queryFn: fetchGrades, 
+    },
     enabled: !!token,
   });
 
@@ -69,7 +56,7 @@ export default function Grades() {
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
       <AppBarNav />
-      
+
       <Container maxWidth="lg" sx={{ pb: 6 }}>
         <Box sx={{ mb: 4 }}>
           <Typography
