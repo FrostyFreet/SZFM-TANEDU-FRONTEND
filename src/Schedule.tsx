@@ -1,54 +1,32 @@
 // ...existing code...
 import { useEffect, useState } from "react";
-import "./index.css";
 import axios from "axios";
-import { useNavigate } from "react-router";
+import {
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Container,
+} from '@mui/material';
+import AppBarNav from './components/AppBarNav';
+import type { ScheduleRow, CourseApi, DayKey } from "./types/Schedule";
 
-type CourseApi = {
-  id: number;
-  name: string;
-  day: string;
-  duration: string;
-  teacherName: string;
-  departmentName: string;
-};
-
-type CourseCell = CourseApi | null;
-
-type ScheduleRow = {
-  duration: string;
-  hetfo: CourseCell;
-  kedd: CourseCell;
-  szerda: CourseCell;
-  csutortok: CourseCell;
-  pentek: CourseCell;
-};
-
-type DayKey = Exclude<keyof ScheduleRow, "duration">;
 
 export default function Schedule() {
   const [rows, setRows] = useState<ScheduleRow[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<CourseApi | null>(null);
-  const navigate = useNavigate();
   const token = localStorage.getItem("token");
-
-  const kijelentkezes = async () => {
-    try {
-      await axios.post(
-        "http://localhost:8080/api/auth/logout",
-        {},
-        {
-          headers: { Authorization: token ? `Bearer ${token}` : "" },
-        }
-      );
-    } catch (err) {
-      console.warn("Logout request failed:", err);
-    } finally {
-      localStorage.removeItem("token");
-      navigate("/");
-    }
-  };
 
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -115,87 +93,194 @@ export default function Schedule() {
   };
 
   return (
-    <div className="hatter">
-      <button id="kijelentkezesBtn" onClick={kijelentkezes}>
-        Kijelentkezés
-      </button>
+    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
+      <AppBarNav />
 
-      <div className="nav-sor">
-        <a href="/orarend">
-          <span>📅</span>Órarend
-        </a>
-        <a href="/jegyek">
-          <span>📊</span>Jegyek, értékelések
-        </a>
-        <a href="/uzenetek">
-          <span>📩</span>Üzenetek
-        </a>
-        <a href="/adatok">
-          <span>👤</span>Adatok
-        </a>
-      </div>
+      <Container maxWidth="lg" sx={{ pb: 6 }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{
+              fontWeight: 700,
+              color: 'primary.main',
+              mb: 3,
+            }}
+          >
+            Órarend
+          </Typography>
 
-      <p className="udvozles">Órarend</p>
+          <TableContainer component={Paper} sx={{ borderRadius: '12px', overflow: 'hidden' }}>
+            <Table>
+              <TableHead sx={{ backgroundColor: 'primary.main' }}>
+                <TableRow>
+                  <TableCell sx={{ color: '#fff', fontWeight: 700, width: '120px' }}>
+                    Időpont
+                  </TableCell>
+                  <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Hétfő</TableCell>
+                  <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Kedd</TableCell>
+                  <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Szerda</TableCell>
+                  <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Csütörtök</TableCell>
+                  <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Péntek</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                      <Typography color="text.secondary">
+                        Nincs elérhető órarend
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  rows.map((r, i) => (
+                    <TableRow
+                      key={i}
+                      sx={{
+                        '&:hover': {
+                          backgroundColor: '#e3f2fd',
+                        },
+                      }}
+                    >
+                      <TableCell sx={{ fontWeight: 700 }}>{r.duration}</TableCell>
+                      <TableCell
+                        onClick={() => handleCellClick(r.hetfo)}
+                        sx={{
+                          cursor: r.hetfo ? 'pointer' : 'default',
+                          color: r.hetfo ? 'primary.main' : 'text.secondary',
+                          fontWeight: r.hetfo ? 500 : 'normal',
+                          '&:hover': {
+                            textDecoration: r.hetfo ? 'underline' : 'none',
+                          },
+                        }}
+                      >
+                        {r.hetfo?.name || ''}
+                      </TableCell>
+                      <TableCell
+                        onClick={() => handleCellClick(r.kedd)}
+                        sx={{
+                          cursor: r.kedd ? 'pointer' : 'default',
+                          color: r.kedd ? 'primary.main' : 'text.secondary',
+                          fontWeight: r.kedd ? 500 : 'normal',
+                          '&:hover': {
+                            textDecoration: r.kedd ? 'underline' : 'none',
+                          },
+                        }}
+                      >
+                        {r.kedd?.name || ''}
+                      </TableCell>
+                      <TableCell
+                        onClick={() => handleCellClick(r.szerda)}
+                        sx={{
+                          cursor: r.szerda ? 'pointer' : 'default',
+                          color: r.szerda ? 'primary.main' : 'text.secondary',
+                          fontWeight: r.szerda ? 500 : 'normal',
+                          '&:hover': {
+                            textDecoration: r.szerda ? 'underline' : 'none',
+                          },
+                        }}
+                      >
+                        {r.szerda?.name || ''}
+                      </TableCell>
+                      <TableCell
+                        onClick={() => handleCellClick(r.csutortok)}
+                        sx={{
+                          cursor: r.csutortok ? 'pointer' : 'default',
+                          color: r.csutortok ? 'primary.main' : 'text.secondary',
+                          fontWeight: r.csutortok ? 500 : 'normal',
+                          '&:hover': {
+                            textDecoration: r.csutortok ? 'underline' : 'none',
+                          },
+                        }}
+                      >
+                        {r.csutortok?.name || ''}
+                      </TableCell>
+                      <TableCell
+                        onClick={() => handleCellClick(r.pentek)}
+                        sx={{
+                          cursor: r.pentek ? 'pointer' : 'default',
+                          color: r.pentek ? 'primary.main' : 'text.secondary',
+                          fontWeight: r.pentek ? 500 : 'normal',
+                          '&:hover': {
+                            textDecoration: r.pentek ? 'underline' : 'none',
+                          },
+                        }}
+                      >
+                        {r.pentek?.name || ''}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
 
-      <div className="tablazat-container">
-        <table className="tablazat">
-          <thead>
-            <tr>
-              <th>Időpont</th>
-              <th>Hétfő</th>
-              <th>Kedd</th>
-              <th>Szerda</th>
-              <th>Csütörtök</th>
-              <th>Péntek</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={6}>Nincs elérhető órarend</td>
-              </tr>
-            ) : (
-              rows.map((r, i) => (
-                <tr key={i}>
-                  <td>{r.duration}</td>
-                  <td onClick={() => handleCellClick(r.hetfo)}>{r.hetfo?.name || ""}</td>
-                  <td onClick={() => handleCellClick(r.kedd)}>{r.kedd?.name || ""}</td>
-                  <td onClick={() => handleCellClick(r.szerda)}>{r.szerda?.name || ""}</td>
-                  <td onClick={() => handleCellClick(r.csutortok)}>{r.csutortok?.name || ""}</td>
-                  <td onClick={() => handleCellClick(r.pentek)}>{r.pentek?.name || ""}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+        <Dialog
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 700, color: 'primary.main' }}>
+            {selectedCourse?.name}
+          </DialogTitle>
+          <DialogContent sx={{ pt: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 700, color: 'text.secondary' }}
+                >
+                  Nap:
+                </Typography>
+                <Typography variant="body1">{selectedCourse?.day}</Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 700, color: 'text.secondary' }}
+                >
+                  Időtartam:
+                </Typography>
+                <Typography variant="body1">{selectedCourse?.duration}</Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 700, color: 'text.secondary' }}
+                >
+                  Oktató:
+                </Typography>
+                <Typography variant="body1">{selectedCourse?.teacherName}</Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 700, color: 'text.secondary' }}
+                >
+                  Osztály / csoport:
+                </Typography>
+                <Typography variant="body1">
+                  {selectedCourse?.departmentName}
+                </Typography>
+              </Box>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowModal(false)} color="primary">
+              Bezárás
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      {showModal && selectedCourse && (
-        <div className="modal">
-          <div className="modal-tartalom">
-            <span className="close" onClick={() => setShowModal(false)}>
-              &times;
-            </span>
-            <h2 id="oraTargy" style={{ color: "blue" }}>
-              {selectedCourse.name}
-            </h2>
-            <p>
-              <span className="data">Nap:</span> <span>{selectedCourse.day}</span>
-            </p>
-            <p>
-              <span className="data">Időtartam:</span> <span>{selectedCourse.duration}</span>
-            </p>
-            <p>
-              <span className="data">Oktató:</span> <span>{selectedCourse.teacherName}</span>
-            </p>
-            <p>
-              <span className="data">Osztály / csoport:</span> <span>{selectedCourse.departmentName}</span>
-            </p>
-          </div>
-        </div>
-      )}
-
-      <footer className="footer-text">© 2025 TanEdu | Hallgatói rendszer</footer>
-    </div>
+        <Box sx={{ textAlign: 'center', mt: 6, color: 'text.secondary' }}>
+          <Typography variant="body2">
+            © 2025 TanEdu | Hallgatói rendszer
+          </Typography>
+        </Box>
+      </Container>
+    </Box>
   );
 }

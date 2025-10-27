@@ -1,14 +1,15 @@
-import { useState } from "react";
-import "./index.css";
+import { useState, useContext } from "react";
 import axios from 'axios'
 import { useNavigate } from "react-router";
+import { Box, TextField, Button, Typography, Paper, Alert, Container } from '@mui/material';
+import { RoleContext } from "./App";
 
 export default function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
-  const [token,setToken]= useState()
   const navigate = useNavigate()
+  const roleContext = useContext(RoleContext);
 
   const handleSubmit = async (e:any) => {
     e.preventDefault();
@@ -22,8 +23,8 @@ export default function Login() {
             "password":password
         })
         if (response && response.data.token){
-            setToken(response.data.token)
             localStorage.setItem("token",response.data.token)
+            roleContext?.setIsLoggedIn(true);
             navigate("/home")
         }
         setEmail("")
@@ -35,41 +36,71 @@ export default function Login() {
   };
 
   return (
-    <div className="login-container">
-      <h1>TanEdu Rendszer</h1>
-      <p className="subtitle">Kérlek, jelentkezz be a folytatáshoz</p>
-
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="username">Email</label>
-          <input
-            type="text"
-            id="email"
-            name="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="password">Jelszó</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-
-        <button type="submit">Bejelentkezés</button>
-
-        {errorMsg && <div className="error-message">{errorMsg}</div>}
-      </form>
-
-      <p className="footer-text">© 2025 TanEdu | Hallgatói rendszer</p>
-    </div>
+    <Container maxWidth="sm">
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <Paper
+          elevation={3}
+          sx={{
+            p: 4,
+            width: '100%',
+            textAlign: 'center',
+            borderRadius: '16px',
+          }}
+        >
+          <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: 'primary.main', mb: 1 }}>
+            📚 TanEdu Rendszer
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
+            Kérlek, jelentkezz be a folytatáshoz
+          </Typography>
+          
+          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              fullWidth
+              placeholder="hello@example.com"
+            />
+            <TextField
+              label="Jelszó"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              fullWidth
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              fullWidth
+              size="large"
+              sx={{ mt: 2, fontWeight: 700 }}
+            >
+              Bejelentkezés
+            </Button>
+            {errorMsg && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {errorMsg}
+              </Alert>
+            )}
+          </Box>
+          
+          <Typography variant="body2" sx={{ mt: 4, color: 'text.secondary' }}>
+            © 2025 TanEdu | Hallgatói rendszer
+          </Typography>
+        </Paper>
+      </Box>
+    </Container>
   );
 }
