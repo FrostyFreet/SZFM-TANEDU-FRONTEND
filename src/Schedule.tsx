@@ -22,14 +22,17 @@ import {
   TextField,
   IconButton,
   Tooltip,
+  Menu,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AppBarNav from './components/AppBarNav';
 import type { ScheduleRow, CourseApi, DayKey } from "./types/Schedule";
 import { RoleContext } from "./App";
 import { courseAPI, departmentAPI, userAPI } from "./API/ApiCalls";
 import { useQuery } from "@tanstack/react-query";
+
 
 export default function Schedule() {
   const roleContext = useContext(RoleContext);
@@ -41,6 +44,8 @@ export default function Schedule() {
   const [departments, setDepartments] = useState<string[]>([]);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const [teachersList, setTeachersList] = useState<string[]>([]);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedMenuCourse, setSelectedMenuCourse] = useState<CourseApi | null>(null);
 
   const [newCourse, setNewCourse] = useState({
     name: "",
@@ -50,7 +55,6 @@ export default function Schedule() {
     departmentName: ""
   });
 
-  // Fetch departments
   const { data: fetchedDepartments = [] } = useQuery({
     queryKey: ["departments", token],
     queryFn: async () => {
@@ -60,7 +64,6 @@ export default function Schedule() {
     enabled: !!token && roleContext?.role === "SYSADMIN",
   });
 
-  // Fetch teachers
   const { data: fetchedTeachers = [] } = useQuery({
     queryKey: ["teachers", token],
     queryFn: async () => {
@@ -85,14 +88,23 @@ export default function Schedule() {
     }
   }, [fetchedTeachers]);
 
-  // Fetch schedule
   const { data: fetchedCourses = [] } = useQuery({
-    queryKey: ["courses", token, selectedDepartment],
+    queryKey: ["courses", token, selectedDepartment, roleContext?.role],
     queryFn: async () => {
-      const response = await courseAPI.getCourseByDepartmentName(
-        roleContext?.role === "SYSADMIN" ? selectedDepartment : undefined
-      );
-      return Array.isArray(response.data) ? response.data : [];
+      try {
+        let response;
+        
+        if (roleContext?.role === "SYSADMIN" && selectedDepartment) {
+          response = await courseAPI.getCourseByDepartmentName(selectedDepartment);
+        } else {
+          response = await courseAPI.getCourseByCurrentUser();
+        }
+        
+        return Array.isArray(response.data) ? response.data : [];
+      } catch (error) {
+        console.error("Failed to fetch courses:", error);
+        return [];
+      }
     },
     enabled: !!token,
   });
@@ -100,6 +112,7 @@ export default function Schedule() {
   useEffect(() => {
     const courses = fetchedCourses;
     const durations: string[] = [];
+    
     for (const c of courses) {
       if (!durations.includes(c.duration)) durations.push(c.duration);
     }
@@ -117,33 +130,46 @@ export default function Schedule() {
     const builtRows: ScheduleRow[] = durations.map((duration) => {
       const base: ScheduleRow = {
         duration,
-        hetfo: null,
-        kedd: null,
-        szerda: null,
-        csutortok: null,
-        pentek: null,
+        hetfo: [],
+        kedd: [],
+        szerda: [],
+        csutortok: [],
+        pentek: [],
       };
+      
       for (const c of courses) {
         if (c.duration !== duration) continue;
         const key = mapDayToKey(c.day);
-        base[key] = c;
+        base[key].push(c);
       }
+      
       return base;
     });
 
     setRows(builtRows);
   }, [fetchedCourses]);
 
-  const handleCellClick = (course: CourseApi | null) => {
-    if (!course) return;
+  const handleCellClick = (course: CourseApi) => {
     setSelectedCourse(course);
     setShowModal(true);
+  };
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, course: CourseApi) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+    setSelectedMenuCourse(course);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedMenuCourse(null);
   };
 
   const handleDeleteCourse = async (courseId: number) => {
     if (!window.confirm("Biztosan törölni szeretnéd ezt az órarendet?")) return;
     try {
       await courseAPI.deleteCourse(courseId);
+      handleMenuClose();
       window.location.reload();
     } catch (error) {
       console.error("Failed to delete course:", error);
@@ -151,20 +177,74 @@ export default function Schedule() {
   };
 
   const handleCreateCourse = async () => {
+    if (!newCourse.name || !newCourse.teacherName || !newCourse.departmentName) {
+      alert("Kérlek töltsd ki az összes mezőt!");
+      return;
+    }
+
     try {
       await courseAPI.createCourse(newCourse);
       setShowCreateCourseModal(false);
       setNewCourse({
         name: "",
         day: "hétfő",
-        duration: "09:00-10:30",
+        duration: "08:00-8:45",
         teacherName: "",
         departmentName: ""
       });
       window.location.reload();
     } catch (error) {
       console.error("Failed to create course:", error);
+      alert("Ebben az időpontban már van óra!");
     }
+  };
+
+  const renderDayCell = (courses: CourseApi[]) => {
+    if (courses.length === 0) {
+      return <Typography color="text.secondary">-</Typography>;
+    }
+
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        {courses.map((course) => (
+          <Box
+            key={course.id}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <Typography
+              onClick={() => handleCellClick(course)}
+              sx={{
+                cursor: 'pointer',
+                color: 'primary.main',
+                fontWeight: 500,
+                flex: 1,
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              {course.name}
+            </Typography>
+            {roleContext?.role === "SYSADMIN" && (
+              <Tooltip title="Más műveletek">
+                <IconButton
+                  size="small"
+                  onClick={(e) => handleMenuOpen(e, course)}
+                  sx={{ opacity: 0.6, '&:hover': { opacity: 1 } }}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        ))}
+      </Box>
+    );
   };
 
   return (
@@ -226,17 +306,12 @@ export default function Schedule() {
                   <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Szerda</TableCell>
                   <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Csütörtök</TableCell>
                   <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Péntek</TableCell>
-                  {roleContext?.role === "SYSADMIN" && (
-                    <TableCell sx={{ color: '#fff', fontWeight: 700, width: '80px' }}>
-                      Műveletek
-                    </TableCell>
-                  )}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={roleContext?.role === "SYSADMIN" ? 7 : 6} align="center" sx={{ py: 3 }}>
+                    <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
                       <Typography color="text.secondary">
                         Nincs elérhető órarend
                       </Typography>
@@ -252,91 +327,24 @@ export default function Schedule() {
                         },
                       }}
                     >
-                      <TableCell sx={{ fontWeight: 700 }}>{r.duration}</TableCell>
-                      <TableCell
-                        onClick={() => handleCellClick(r.hetfo)}
-                        sx={{
-                          cursor: r.hetfo ? 'pointer' : 'default',
-                          color: r.hetfo ? 'primary.main' : 'text.secondary',
-                          fontWeight: r.hetfo ? 500 : 'normal',
-                          '&:hover': {
-                            textDecoration: r.hetfo ? 'underline' : 'none',
-                          },
-                        }}
-                      >
-                        {r.hetfo?.name || ''}
+                      <TableCell sx={{ fontWeight: 700, verticalAlign: 'top' }}>
+                        {r.duration}
                       </TableCell>
-                      <TableCell
-                        onClick={() => handleCellClick(r.kedd)}
-                        sx={{
-                          cursor: r.kedd ? 'pointer' : 'default',
-                          color: r.kedd ? 'primary.main' : 'text.secondary',
-                          fontWeight: r.kedd ? 500 : 'normal',
-                          '&:hover': {
-                            textDecoration: r.kedd ? 'underline' : 'none',
-                          },
-                        }}
-                      >
-                        {r.kedd?.name || ''}
+                      <TableCell sx={{ verticalAlign: 'top' }}>
+                        {renderDayCell(r.hetfo)}
                       </TableCell>
-                      <TableCell
-                        onClick={() => handleCellClick(r.szerda)}
-                        sx={{
-                          cursor: r.szerda ? 'pointer' : 'default',
-                          color: r.szerda ? 'primary.main' : 'text.secondary',
-                          fontWeight: r.szerda ? 500 : 'normal',
-                          '&:hover': {
-                            textDecoration: r.szerda ? 'underline' : 'none',
-                          },
-                        }}
-                      >
-                        {r.szerda?.name || ''}
+                      <TableCell sx={{ verticalAlign: 'top' }}>
+                        {renderDayCell(r.kedd)}
                       </TableCell>
-                      <TableCell
-                        onClick={() => handleCellClick(r.csutortok)}
-                        sx={{
-                          cursor: r.csutortok ? 'pointer' : 'default',
-                          color: r.csutortok ? 'primary.main' : 'text.secondary',
-                          fontWeight: r.csutortok ? 500 : 'normal',
-                          '&:hover': {
-                            textDecoration: r.csutortok ? 'underline' : 'none',
-                          },
-                        }}
-                      >
-                        {r.csutortok?.name || ''}
+                      <TableCell sx={{ verticalAlign: 'top' }}>
+                        {renderDayCell(r.szerda)}
                       </TableCell>
-                      <TableCell
-                        onClick={() => handleCellClick(r.pentek)}
-                        sx={{
-                          cursor: r.pentek ? 'pointer' : 'default',
-                          color: r.pentek ? 'primary.main' : 'text.secondary',
-                          fontWeight: r.pentek ? 500 : 'normal',
-                          '&:hover': {
-                            textDecoration: r.pentek ? 'underline' : 'none',
-                          },
-                        }}
-                      >
-                        {r.pentek?.name || ''}
+                      <TableCell sx={{ verticalAlign: 'top' }}>
+                        {renderDayCell(r.csutortok)}
                       </TableCell>
-                      {roleContext?.role === "SYSADMIN" && (
-                        <TableCell sx={{ textAlign: 'center' }}>
-                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-                            {[r.hetfo, r.kedd, r.szerda, r.csutortok, r.pentek].map((course, idx) => (
-                              course && (
-                                <Tooltip key={idx} title="Törlés">
-                                  <IconButton
-                                    size="small"
-                                    color="error"
-                                    onClick={() => handleDeleteCourse(course.id)}
-                                  >
-                                    <DeleteIcon fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
-                              )
-                            ))}
-                          </Box>
-                        </TableCell>
-                      )}
+                      <TableCell sx={{ verticalAlign: 'top' }}>
+                        {renderDayCell(r.pentek)}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -345,6 +353,7 @@ export default function Schedule() {
           </TableContainer>
         </Box>
 
+        {/* Course Details Modal */}
         <Dialog
           open={showModal}
           onClose={() => setShowModal(false)}
@@ -357,42 +366,28 @@ export default function Schedule() {
           <DialogContent sx={{ pt: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               <Box>
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 700, color: 'text.secondary' }}
-                >
+                <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
                   Nap:
                 </Typography>
                 <Typography variant="body1">{selectedCourse?.day}</Typography>
               </Box>
               <Box>
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 700, color: 'text.secondary' }}
-                >
+                <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
                   Időtartam:
                 </Typography>
                 <Typography variant="body1">{selectedCourse?.duration}</Typography>
               </Box>
               <Box>
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 700, color: 'text.secondary' }}
-                >
+                <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
                   Oktató:
                 </Typography>
                 <Typography variant="body1">{selectedCourse?.teacherName}</Typography>
               </Box>
               <Box>
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 700, color: 'text.secondary' }}
-                >
+                <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
                   Osztály / csoport:
                 </Typography>
-                <Typography variant="body1">
-                  {selectedCourse?.departmentName}
-                </Typography>
+                <Typography variant="body1">{selectedCourse?.departmentName}</Typography>
               </Box>
             </Box>
           </DialogContent>
@@ -403,6 +398,19 @@ export default function Schedule() {
           </DialogActions>
         </Dialog>
 
+        {/* Delete Menu */}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+        >
+          <MenuItem onClick={() => handleDeleteCourse(selectedMenuCourse?.id || 0)}>
+            <DeleteIcon sx={{ mr: 1, fontSize: '1.2rem', color: 'error.main' }} />
+            <Typography color="error">Törlés</Typography>
+          </MenuItem>
+        </Menu>
+
+        {/* Create Course Modal */}
         <Dialog
           open={showCreateCourseModal}
           onClose={() => setShowCreateCourseModal(false)}

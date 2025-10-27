@@ -11,11 +11,11 @@ export type CourseCell = CourseApi | null;
 
 export type ScheduleRow = {
   duration: string;
-  hetfo: CourseCell;
-  kedd: CourseCell;
-  szerda: CourseCell;
-  csutortok: CourseCell;
-  pentek: CourseCell;
+  hetfo: CourseApi[];
+  kedd: CourseApi[];
+  szerda: CourseApi[];
+  csutortok: CourseApi[];
+  pentek: CourseApi[];
 };
 
 export type DayKey = Exclude<keyof ScheduleRow, "duration">;

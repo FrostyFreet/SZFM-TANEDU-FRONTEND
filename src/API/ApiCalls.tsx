@@ -74,12 +74,19 @@ export const gradeAPI = {
 
 // ============ COURSE/SCHEDULE API ============
 export const courseAPI = {
-  getCourseByDepartmentName: (departmentName?: string) => {
-    let url = `${API_BASE_URL}/course/getCourseByDepartmentName`;
-    if (departmentName) {
-      url += `?departmentName=${encodeURIComponent(departmentName)}`;
-    }
-    return axios.get(url, { headers: getAuthHeaders() });
+  getCourseByCurrentUser: () => {
+    return axios.get(`${API_BASE_URL}/course/getCourseByCurrentUser`, {
+      headers: getAuthHeaders(),
+    });
+  },
+
+   getCourseByDepartmentName: (departmentName: string) => {
+    return axios.get(`${API_BASE_URL}/course/getCourseByDepartmentName`, {
+      params: {
+        name: departmentName,
+      },
+      headers: getAuthHeaders(),
+    });
   },
 
   createCourse: (courseData: {
@@ -89,7 +96,17 @@ export const courseAPI = {
     teacherName: string;
     departmentName: string;
   }) =>
-    axios.post(`${API_BASE_URL}/course/create`, courseData, {
+    axios.post(`${API_BASE_URL}/course/create`, {
+      name: courseData.name,
+      day: courseData.day,
+      duration: courseData.duration,
+      teacher: {
+        email: courseData.teacherName, 
+      },
+      department: {
+        name: courseData.departmentName,
+      },
+    }, {
       headers: getAuthHeaders(),
     }),
 
