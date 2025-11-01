@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   Box,
   Typography,
@@ -13,7 +13,20 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import { RoleContext } from "./App";
+import { userAPI } from "./API/ApiCalls";
 import AppBarNav from './components/AppBarNav';
 import type { Grade } from "./types/Grade";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +35,14 @@ import { gradeAPI } from "./API/ApiCalls";
 export default function Grades() {
   const [jegyek, setJegyek] = useState<Grade[]>([]);
   const token = localStorage.getItem("token");
+  const roleContext = useContext(RoleContext);
+  const [showCreateGradeModal, setShowCreateGradeModal] = useState(false);
+  const [studentsList, setStudentsList] = useState<string[]>([]);
+  const [newGrade, setNewGrade] = useState({
+    studentEmail: "",
+    value: "",
+    comment: ""
+  });
 
   const { data: fetchedGrades, isLoading } = useQuery({
     queryKey: ["grades", token],
@@ -45,6 +66,20 @@ export default function Grades() {
       setJegyek(fetchedGrades);
     }
   }, [fetchedGrades]);
+const { data: fetchedStudents = [] } = useQuery({
+  queryKey: ["students", token],
+  queryFn: async () => {
+    const response = await userAPI.getAllStudentsEmail();
+    return Array.isArray(response.data) ? response.data : [];
+  },
+  enabled: !!token && roleContext?.role === "TEACHER",
+});
+
+useEffect(() => {
+  if (fetchedStudents.length > 0) {
+    setStudentsList(fetchedStudents);
+  }
+}, [fetchedStudents]);
 
   const atlag =
     jegyek.length > 0
@@ -70,6 +105,93 @@ export default function Grades() {
           >
             Jegyek, értékelések
           </Typography>
+            {(roleContext?.role === "TEACHER" || roleContext?.role === "SYSADMIN" )&& (
+  <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+    <Button
+      variant="contained"
+      startIcon={<AddIcon />}
+      onClick={() => setShowCreateGradeModal(true)}
+    >
+      Új jegy hozzáadása
+    </Button>
+  </Box>
+)}
+
+{/* Jegy létrehozása modál */}
+<Dialog
+  open={showCreateGradeModal}
+  onClose={() => setShowCreateGradeModal(false)}
+  fullWidth
+  maxWidth="sm"
+>
+  <DialogTitle>Új jegy létrehozása</DialogTitle>
+  <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+    <FormControl fullWidth>
+      <InputLabel>Diák (email)</InputLabel>
+      <Select
+        value={newGrade.studentEmail}
+        label="Diák (email)"
+        onChange={(e) =>
+          setNewGrade({ ...newGrade, studentEmail: e.target.value })
+        }
+      >
+        {studentsList.map((student) => (
+          <MenuItem key={student} value={student}>
+            {student}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+
+    <TextField
+      label="Jegy (1-5)"
+      type="number"
+      value={newGrade.value}
+      onChange={(e) => setNewGrade({ ...newGrade, value: e.target.value })}
+      inputProps={{ min: 1, max: 5 }}
+      fullWidth
+    />
+
+    <TextField
+      label="Megjegyzés"
+      multiline
+      rows={3}
+      value={newGrade.comment}
+      onChange={(e) => setNewGrade({ ...newGrade, comment: e.target.value })}
+      fullWidth
+    />
+  </DialogContent>
+
+   <DialogActions>
+    <Button onClick={() => setShowCreateGradeModal(false)}>Mégse</Button>
+    <Button
+      variant="contained"
+      onClick={async () => {
+        if (!newGrade.studentEmail || !newGrade.value) {
+          alert("Kérlek töltsd ki az összes mezőt!");
+          return;
+        }
+        try {
+          await gradeAPI.createGrade({
+            studentEmail: newGrade.studentEmail,
+            value: parseInt(newGrade.value),
+            comment: newGrade.comment,
+          });
+          alert("Jegy sikeresen hozzáadva!");
+          setShowCreateGradeModal(false);
+          window.location.reload();
+        } catch (error) {
+          console.error(error);
+          alert("Hiba történt a jegy mentésekor!");
+        }
+      }}
+    >
+      Mentés
+    </Button>
+  </DialogActions>
+</Dialog>
+
+
 
           {isLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
