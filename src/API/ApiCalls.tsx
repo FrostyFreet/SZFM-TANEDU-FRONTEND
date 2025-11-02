@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8080/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Helper function to get token
 const getToken = () => localStorage.getItem("token");
@@ -44,6 +44,11 @@ export const userAPI = {
     axios.get(`${API_BASE_URL}/users/getAllTeachersEmail`, {
       headers: getAuthHeaders(),
     }),
+
+   getAllStudentsEmail: () =>
+    axios.get(`${API_BASE_URL}/users/getAllStudentsEmail`, {
+      headers: getAuthHeaders(),
+    }),
 };
 
 // ============ MESSAGES API ============
@@ -70,6 +75,21 @@ export const gradeAPI = {
     axios.get(`${API_BASE_URL}/grade/getAllByCurrentUser`, {
       headers: getAuthHeaders(),
     }),
+
+  createGrade: (gradeData: {
+    studentEmail: string;
+    value: number;
+    comment: string;
+  }) =>
+    axios.post(
+      `${API_BASE_URL}/grade/create`,
+      {
+        student: { email: gradeData.studentEmail },
+        value: gradeData.value,
+        comment: gradeData.comment,
+      },
+      { headers: getAuthHeaders() }
+    ),
 };
 
 // ============ COURSE/SCHEDULE API ============
