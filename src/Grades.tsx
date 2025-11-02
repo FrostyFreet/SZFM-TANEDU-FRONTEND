@@ -44,6 +44,8 @@ export default function Grades() {
     comment: ""
   });
 
+  const gradesList = [1,2,3,4,5]
+
   const { data: fetchedGrades, isLoading } = useQuery({
     queryKey: ["grades", token],
     queryFn: async () => {
@@ -72,7 +74,7 @@ const { data: fetchedStudents = [] } = useQuery({
     const response = await userAPI.getAllStudentsEmail();
     return Array.isArray(response.data) ? response.data : [];
   },
-  enabled: !!token && roleContext?.role === "TEACHER",
+  enabled: !!token && (roleContext?.role === "TEACHER" || roleContext?.role === "SYSADMIN" ),
 });
 
 useEffect(() => {
@@ -142,18 +144,23 @@ useEffect(() => {
         ))}
       </Select>
     </FormControl>
+    <FormControl fullWidth>
+      <InputLabel>Jegy (1-5)</InputLabel>
+      <Select
+        value={newGrade.value}
+        label="Jegy (1-5)"
+         onChange={(e) => setNewGrade({ ...newGrade, value: e.target.value })}
+      >
+        {gradesList.map((grade) => (
+          <MenuItem key={grade} value={grade}>
+            {grade}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
 
     <TextField
-      label="Jegy (1-5)"
-      type="number"
-      value={newGrade.value}
-      onChange={(e) => setNewGrade({ ...newGrade, value: e.target.value })}
-      inputProps={{ min: 1, max: 5 }}
-      fullWidth
-    />
-
-    <TextField
-      label="Megjegyzés"
+      label="Tárgy"
       multiline
       rows={3}
       value={newGrade.comment}
