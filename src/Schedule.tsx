@@ -63,6 +63,14 @@ export default function Schedule() {
     },
     enabled: !!token && roleContext?.role === "SYSADMIN",
   });
+  const {data:fetchedSubjects} = useQuery({
+    queryKey: ["subject", token],
+    queryFn: async () => {
+      const response = await courseAPI.getAllAvailableSubjects();
+      return Array.isArray(response.data) ? response.data.map((d: any) => d.name || d) : [];
+    },
+    enabled: !!token && roleContext?.role === "SYSADMIN",
+  })
 
   const { data: fetchedTeachers = [] } = useQuery({
     queryKey: ["teachers", token],
@@ -422,13 +430,18 @@ export default function Schedule() {
           </DialogTitle>
           <DialogContent sx={{ pt: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <TextField
-                label="Tárgy neve"
-                value={newCourse.name}
-                onChange={(e) => setNewCourse({ ...newCourse, name: e.target.value })}
-                fullWidth
-                required
-              />
+              <FormControl fullWidth required>
+                <InputLabel>Tárgy neve</InputLabel>
+                <Select
+                  value={newCourse.name}
+                  label="Tárgy neve"
+                  onChange={(e) => setNewCourse({ ...newCourse, name: e.target.value })}
+                >
+                  {fetchedSubjects?.map((subject)=>(
+                    <MenuItem key={subject} value={subject}>{subject}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <FormControl fullWidth required>
                 <InputLabel>Nap</InputLabel>
                 <Select

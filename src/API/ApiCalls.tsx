@@ -109,6 +109,12 @@ export const courseAPI = {
     });
   },
 
+  getAllAvailableSubjects:()=>{
+    return axios.get(`${API_BASE_URL}/users/getAllAvailableSubjects`, {
+          headers: getAuthHeaders(),
+        });
+  },
+
   createCourse: (courseData: {
     name: string;
     day: string;
