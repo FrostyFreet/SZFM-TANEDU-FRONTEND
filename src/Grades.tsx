@@ -26,7 +26,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { RoleContext } from "./App";
-import { userAPI } from "./API/ApiCalls";
+import { courseAPI, userAPI } from "./API/ApiCalls";
 import AppBarNav from './components/AppBarNav';
 import type { Grade } from "./types/Grade";
 import { useQuery } from "@tanstack/react-query";
@@ -43,6 +43,15 @@ export default function Grades() {
     value: "",
     comment: ""
   });
+
+  const {data:fetchedSubjects} = useQuery({
+      queryKey: ["subject", token],
+      queryFn: async () => {
+        const response = await courseAPI.getAllAvailableSubjects();
+        return Array.isArray(response.data) ? response.data.map((d: any) => d.name || d) : [];
+      },
+      enabled: !!token && (roleContext?.role === "SYSADMIN" || roleContext?.role === "TEACHER"),
+  })
 
   const { data: fetchedGrades, isLoading } = useQuery({
     queryKey: ["grades", token],
@@ -72,7 +81,7 @@ const { data: fetchedStudents = [] } = useQuery({
     const response = await userAPI.getAllStudentsEmail();
     return Array.isArray(response.data) ? response.data : [];
   },
-  enabled: !!token && roleContext?.role === "TEACHER",
+  enabled: !!token && (roleContext?.role === "TEACHER" || roleContext?.role === "SYSADMIN") ,
 });
 
 useEffect(() => {
@@ -152,14 +161,23 @@ useEffect(() => {
       fullWidth
     />
 
-    <TextField
-      label="Megjegyzés"
-      multiline
-      rows={3}
-      value={newGrade.comment}
-      onChange={(e) => setNewGrade({ ...newGrade, comment: e.target.value })}
-      fullWidth
-    />
+  
+    <FormControl fullWidth>
+      <InputLabel>Tárgy</InputLabel>
+      <Select
+        value={newGrade.comment}
+        label="Tárgy"
+        onChange={(e) =>
+          setNewGrade({ ...newGrade, comment: e.target.value })
+        }
+      >
+        {fetchedSubjects?.map((subject) => (
+          <MenuItem key={subject} value={subject}>
+            {subject}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
   </DialogContent>
 
    <DialogActions>
