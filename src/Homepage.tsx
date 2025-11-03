@@ -10,6 +10,7 @@ export default function Homepage() {
     { icon: '📊', label: 'Jegyek, értékelések', path: '/jegyek' },
     { icon: '📩', label: 'Üzenetek', path: '/uzenetek' },
     { icon: '👤', label: 'Adatok', path: '/adatok' },
+    { icon: "✅", label: "Jelenlét", path: "/jelenlét" }
   ];
 
   return (

@@ -10,6 +10,7 @@ import { createContext, useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Box } from "@mui/material"
 import { userAPI, authAPI } from "./API/ApiCalls"
+import Attendance from "./Attendance"
 
 export const RoleContext = createContext<{
   role: string | null;
@@ -143,6 +144,14 @@ function App() {
                     <Profile />
                   </ProtectedRoute>
                 } 
+              />
+              <Route
+              path="/jelenlét"
+              element={
+                <ProtectedRoute>
+                  <Attendance/>
+                </ProtectedRoute>
+              }
               />
             </>
           ) : (

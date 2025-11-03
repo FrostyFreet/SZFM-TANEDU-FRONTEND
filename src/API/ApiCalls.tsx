@@ -95,7 +95,23 @@ export const gradeAPI = {
 // ============ COURSE/SCHEDULE API ============
 export const courseAPI = {
   getCourseByCurrentUser: () => {
-    return axios.get(`${API_BASE_URL}/course/getCourseByCurrentUser`, {
+    return axios.get(`${API_BASE_URL}/course/getCourseByDepartmentNameForCurrentUser`, {
+      headers: getAuthHeaders(),
+    });
+  },
+
+  getAttendanceCourses: (role: string) => {
+    const endpoint = role === "SYSADMIN" 
+      ? `${API_BASE_URL}/course/getAll`
+      : `${API_BASE_URL}/course/getByCurrentTeacher`;
+    
+    return axios.get(endpoint, {
+      headers: getAuthHeaders(),
+    });
+  },
+
+  getStudentsForCourses: (courseId: number) => {
+    return axios.get(`${API_BASE_URL}/course/${courseId}/students`, {
       headers: getAuthHeaders(),
     });
   },
