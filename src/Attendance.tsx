@@ -15,15 +15,6 @@ export default function Attendance() {
   const token = localStorage.getItem("token");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
-  const { data: attendanceCourses } = useQuery({
-    queryKey: ["teachers", roleContext?.role, token],
-    queryFn: async () => {
-      const response = await courseAPI.getAttendanceCourses(roleContext?.role || "");
-      return Array.isArray(response.data) ? response.data : [];
-    },
-    enabled: !!token && !!roleContext?.role,
-  });
-
   const { data: departmentList } = useQuery({
     queryKey: ["departmentList", token],
     queryFn: async () => {

@@ -76,6 +76,20 @@ export const gradeAPI = {
       headers: getAuthHeaders(),
     }),
 
+  getAllByStudentId: (studentId:number) =>
+    axios.get(`${API_BASE_URL}/grade/getAllByStudentId/${studentId}`, {
+      headers: getAuthHeaders(),
+  }),
+
+  getAllGradesByStudentEmail: (email:string) =>
+    axios.get(`${API_BASE_URL}/grade/getAllGradesByStudentEmail/${email}`, {
+      headers: getAuthHeaders(),
+  }),
+  deleteGradeById: (id:number) =>
+    axios.delete(`${API_BASE_URL}/grade/deleteGradeById/${id}`, {
+      headers: getAuthHeaders(),
+  }),
+
   createGrade: (gradeData: {
     studentEmail: string;
     value: number;
