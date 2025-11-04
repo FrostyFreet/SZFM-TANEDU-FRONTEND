@@ -49,6 +49,28 @@ export const userAPI = {
     axios.get(`${API_BASE_URL}/users/getAllStudentsEmail`, {
       headers: getAuthHeaders(),
     }),
+    getAllUsers: () =>
+  axios.get(`${API_BASE_URL}/users/getAll`, {
+    headers: getAuthHeaders(),
+  }),
+  updateUser: (id: number, updatedData: any) =>
+  axios.put(
+    `${API_BASE_URL}/users/update/${id}`,
+    updatedData,
+    { headers: getAuthHeaders() }
+  ),
+      
+  createUser: (userData: {
+    fullName: string;
+    email: string;
+    password: string;
+    role: string;
+  }) =>
+    axios.post(
+      `${API_BASE_URL}/users/create`,
+      userData,
+      { headers: getAuthHeaders() }
+    ),
 };
 
 // ============ MESSAGES API ============
