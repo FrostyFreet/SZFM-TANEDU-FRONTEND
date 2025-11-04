@@ -246,8 +246,6 @@ export default function Schedule() {
     } catch (error:any) {
      console.error("Failed to create course:", error);
     const raw = error?.response?.data?.message || error?.response?.data?.error || error?.response?.data || error?.message || "";
-    console.log(error);
-    
     let msg = String(raw);
 
     if (/Teacher not found/i.test(msg)) {
