@@ -148,7 +148,7 @@ export default function Adatok() {
                   </TableRow>
                   <TableRow sx={{ '&:hover': { backgroundColor: "rgba(255,255,255,0.08)" } }}>
                     <TableCell sx={{ fontWeight: 600 }}>Születés ideje</TableCell>
-                    <TableCell>{adatok.birthDate || "Nem megadott"}</TableCell>
+                    <TableCell>{adatok.birthDate && new Date(adatok.birthDate).toLocaleDateString() || "Nem megadott"}</TableCell>
                   </TableRow>
                   <TableRow sx={{ '&:hover': { backgroundColor: "rgba(255,255,255,0.08)" } }}>
                     <TableCell sx={{ fontWeight: 600 }}>E-mail cím</TableCell>
