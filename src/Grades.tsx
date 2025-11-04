@@ -23,14 +23,15 @@ import {
   Select,
   MenuItem,
   TextField,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { RoleContext } from "./App";
-import { userAPI } from "./API/ApiCalls";
-import AppBarNav from './components/AppBarNav';
+import { courseAPI, userAPI, gradeAPI } from "./API/ApiCalls";
 import type { Grade } from "./types/Grade";
 import { useQuery } from "@tanstack/react-query";
-import { gradeAPI } from "./API/ApiCalls";
 
 export default function Grades() {
   const [jegyek, setJegyek] = useState<Grade[]>([]);
@@ -38,188 +39,265 @@ export default function Grades() {
   const roleContext = useContext(RoleContext);
   const [showCreateGradeModal, setShowCreateGradeModal] = useState(false);
   const [studentsList, setStudentsList] = useState<string[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string>("");
   const [newGrade, setNewGrade] = useState({
     studentEmail: "",
     value: "",
-    comment: ""
+    subject: "",
   });
-
-  const gradesList = [1,2,3,4,5]
-
-  const { data: fetchedGrades, isLoading } = useQuery({
-    queryKey: ["grades", token],
+  
+  const { data: fetchedSubjects } = useQuery({
+    queryKey: ["subject", token],
     queryFn: async () => {
-      const response = await gradeAPI.getAllByCurrentUser();
-      if (Array.isArray(response.data)) {
-        return response.data.map((item: any) => ({
-          targy: item.comment || "Ismeretlen",
-          jegy: item.value || 0,
-          datum: new Date().toLocaleDateString('hu-HU'),
-          megjegyzes: item.teacherName || "Nincs megjegyzés",
-        }));
-      }
-      return [];
+      const response = await courseAPI.getAllAvailableSubjects();
+      return Array.isArray(response.data)
+        ? response.data.map((d: any) => d.name || d)
+        : [];
     },
-    enabled: !!token,
+    enabled:
+      !!token &&
+      (roleContext?.role === "SYSADMIN" || roleContext?.role === "TEACHER"),
+  });  
+
+  const { data: fetchedGrades, isLoading, refetch } = useQuery({
+    queryKey: ["grades", token, selectedUser],
+    queryFn: async () => {
+      if (roleContext?.role === "SYSADMIN" && selectedUser) {
+        const response = await gradeAPI.getAllGradesByStudentEmail(selectedUser);
+        return Array.isArray(response.data) ? response.data : [];
+      } else {
+        const response = await gradeAPI.getAllByCurrentUser();
+        return Array.isArray(response.data) ? response.data : [];
+      }
+    },
+    enabled: !!token && (roleContext?.role === "SYSADMIN" ? !!selectedUser : true),
+  });
+  
+  const { data: fetchedStudents = [] } = useQuery({
+    queryKey: ["students", token],
+    queryFn: async () => {
+      const response = await userAPI.getAllStudentsEmail();
+      return Array.isArray(response.data) ? response.data : [];
+    },
+    enabled: !!token && roleContext?.role === "SYSADMIN",
   });
 
   useEffect(() => {
     if (fetchedGrades) {
-      setJegyek(fetchedGrades);
+      setJegyek(
+        fetchedGrades.map((item: any) => ({
+          id: item.id,
+          subject: item.subject || "Ismeretlen",
+          createdAt: item.createdAt ? new Date(item.createdAt) : null,
+          studentName: item.studentName || "Nincs adat",
+          teacherName: item.teacherName || "Nincs adat",
+          value: item.value || 0,
+        }))
+      );
     }
   }, [fetchedGrades]);
-const { data: fetchedStudents = [] } = useQuery({
-  queryKey: ["students", token],
-  queryFn: async () => {
-    const response = await userAPI.getAllStudentsEmail();
-    return Array.isArray(response.data) ? response.data : [];
-  },
-  enabled: !!token && (roleContext?.role === "TEACHER" || roleContext?.role === "SYSADMIN" ),
-});
 
-useEffect(() => {
-  if (fetchedStudents.length > 0) {
-    setStudentsList(fetchedStudents);
-  }
-}, [fetchedStudents]);
+  useEffect(() => {
+    if (fetchedStudents.length > 0) {
+      setStudentsList(fetchedStudents);
+    }
+  }, [fetchedStudents]);
+
+  const handleDeleteGrade = async (gradeId: number) => {
+    if (!window.confirm("Biztosan törölni szeretnéd ezt a jegyet?")) return;
+
+    try {
+      await gradeAPI.deleteGradeById(gradeId);
+      alert("Jegy sikeresen törölve!");
+      refetch();
+    } catch (error) {
+      console.error("Hiba történt:", error);
+      alert("Hiba történt a törléskor!");
+    }
+  };
 
   const atlag =
     jegyek.length > 0
       ? (
-          jegyek.reduce((sum: number, j: Grade) => sum + j.jegy, 0) / jegyek.length
+          jegyek.reduce((sum: number, j: Grade) => sum + j.value, 0) / jegyek.length
         ).toFixed(2)
       : "Nincs adat";
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
-      <AppBarNav />
+    <Box
+      sx={{
+        bgcolor: "background.default",
+        minHeight: "100vh",
+        display: "flex",
+      }}
+    >
 
-      <Container maxWidth="lg" sx={{ pb: 6 }}>
-        <Box sx={{ mb: 4 }}>
+      <Container maxWidth="lg" sx={{ py: 6 }}>
           <Typography
             variant="h4"
             gutterBottom
             sx={{
               fontWeight: 700,
-              color: 'primary.main',
+              color: "primary.main",
               mb: 3,
+              textAlign: "center",
             }}
           >
-            Jegyek, értékelések
+            Jegyek és értékelések
           </Typography>
-            {(roleContext?.role === "TEACHER" || roleContext?.role === "SYSADMIN" )&& (
-  <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-    <Button
-      variant="contained"
-      startIcon={<AddIcon />}
-      onClick={() => setShowCreateGradeModal(true)}
-    >
-      Új jegy hozzáadása
-    </Button>
-  </Box>
-)}
 
-{/* Jegy létrehozása modál */}
-<Dialog
-  open={showCreateGradeModal}
-  onClose={() => setShowCreateGradeModal(false)}
-  fullWidth
-  maxWidth="sm"
->
-  <DialogTitle>Új jegy létrehozása</DialogTitle>
-  <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-    <FormControl fullWidth>
-      <InputLabel>Diák (email)</InputLabel>
-      <Select
-        value={newGrade.studentEmail}
-        label="Diák (email)"
-        onChange={(e) =>
-          setNewGrade({ ...newGrade, studentEmail: e.target.value })
-        }
-      >
-        {studentsList.map((student) => (
-          <MenuItem key={student} value={student}>
-            {student}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-    <FormControl fullWidth>
-      <InputLabel>Jegy (1-5)</InputLabel>
-      <Select
-        value={newGrade.value}
-        label="Jegy (1-5)"
-         onChange={(e) => setNewGrade({ ...newGrade, value: e.target.value })}
-      >
-        {gradesList.map((grade) => (
-          <MenuItem key={grade} value={grade}>
-            {grade}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
+          {roleContext?.role === "SYSADMIN" && (
+            <FormControl fullWidth sx={{ mb: 3 }}>
+              <InputLabel>Felhasználó kiválasztása</InputLabel>
+              <Select
+                value={selectedUser}
+                onChange={(e) => setSelectedUser(e.target.value)}
+                label="Felhasználó kiválasztása"
+              >
+                {studentsList.map((student) => (
+                  <MenuItem key={student} value={student}>
+                    {student}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
-    <TextField
-      label="Tárgy"
-      multiline
-      rows={3}
-      value={newGrade.comment}
-      onChange={(e) => setNewGrade({ ...newGrade, comment: e.target.value })}
-      fullWidth
-    />
-  </DialogContent>
+          {(roleContext?.role === "TEACHER" || roleContext?.role === "SYSADMIN") && (
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => setShowCreateGradeModal(true)}
+              >
+                Új jegy hozzáadása
+              </Button>
+            </Box>
+          )}
 
-   <DialogActions>
-    <Button onClick={() => setShowCreateGradeModal(false)}>Mégse</Button>
-    <Button
-      variant="contained"
-      onClick={async () => {
-        if (!newGrade.studentEmail || !newGrade.value) {
-          alert("Kérlek töltsd ki az összes mezőt!");
-          return;
-        }
-        try {
-          await gradeAPI.createGrade({
-            studentEmail: newGrade.studentEmail,
-            value: parseInt(newGrade.value),
-            comment: newGrade.comment,
-          });
-          alert("Jegy sikeresen hozzáadva!");
-          setShowCreateGradeModal(false);
-          window.location.reload();
-        } catch (error) {
-          console.error(error);
-          alert("Hiba történt a jegy mentésekor!");
-        }
-      }}
-    >
-      Mentés
-    </Button>
-  </DialogActions>
-</Dialog>
+          <Dialog
+            open={showCreateGradeModal}
+            onClose={() => setShowCreateGradeModal(false)}
+            fullWidth
+            maxWidth="sm"
+          >
+            <DialogTitle>Új jegy létrehozása</DialogTitle>
+            <DialogContent
+              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+            >
+              <FormControl fullWidth>
+                <InputLabel>Diák (email)</InputLabel>
+                <Select
+                  value={newGrade.studentEmail}
+                  label="Diák (email)"
+                  onChange={(e) =>
+                    setNewGrade({ ...newGrade, studentEmail: e.target.value })
+                  }
+                >
+                  {studentsList.map((student) => (
+                    <MenuItem key={student} value={student}>
+                      {student}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
+              <TextField
+                label="Jegy (1-5)"
+                type="number"
+                value={newGrade.value}
+                onChange={(e) => setNewGrade({ ...newGrade, value: e.target.value })}
+                inputProps={{ min: 1, max: 5 }}
+                fullWidth
+              />
 
+              <FormControl fullWidth>
+                <InputLabel>Tantárgy</InputLabel>
+                <Select
+                  value={newGrade.subject}
+                  label="Tantárgy"
+                  onChange={(e) =>
+                    setNewGrade({ ...newGrade, subject: e.target.value })
+                  }
+                >
+                  {fetchedSubjects?.map((subject) => (
+                    <MenuItem key={subject} value={subject}>
+                      {subject}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </DialogContent>
+
+            <DialogActions>
+              <Button onClick={() => setShowCreateGradeModal(false)}>Mégse</Button>
+              <Button
+                variant="contained"
+                onClick={async () => {
+                  if (!newGrade.studentEmail || !newGrade.value) {
+                    alert("Tölts ki minden mezőt!");
+                    return;
+                  }
+                  try {
+                    await gradeAPI.createGrade({
+                      studentEmail: newGrade.studentEmail,
+                      value: parseInt(newGrade.value),
+                      subject: newGrade.subject,
+                    });
+                    alert("Jegy sikeresen hozzáadva!");
+                    setShowCreateGradeModal(false);
+                    refetch();
+                  } catch (error) {
+                    console.error(error);
+                    alert("Hiba történt!");
+                  }
+                }}
+              >
+                Mentés
+              </Button>
+            </DialogActions>
+          </Dialog>
 
           {isLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
               <CircularProgress />
             </Box>
           ) : (
-            <>
-              <TableContainer component={Paper} sx={{ borderRadius: '12px', overflow: 'hidden' }}>
+              <TableContainer
+                component={Paper}
+                sx={{
+                  borderRadius: "16px",
+                  overflow: "hidden",
+                  backdropFilter: "blur(12px)",
+                  background: "rgba(255,255,255,0.05)",
+                }}
+              >
                 <Table>
-                  <TableHead sx={{ backgroundColor: 'primary.main' }}>
+                  <TableHead sx={{ backgroundColor: "primary.main" }}>
                     <TableRow>
-                      <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Tantárgy</TableCell>
-                      <TableCell sx={{ color: '#fff', fontWeight: 700 }} align="center">Jegy</TableCell>
-                      <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Dátum</TableCell>
-                      <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Tanár</TableCell>
+                      <TableCell sx={{ color: "#fff", fontWeight: 700 }}>
+                        Tantárgy
+                      </TableCell>
+                      <TableCell sx={{ color: "#fff", fontWeight: 700 }} align="center">
+                        Jegy
+                      </TableCell>
+                      <TableCell sx={{ color: "#fff", fontWeight: 700 }}>Dátum</TableCell>
+                      <TableCell sx={{ color: "#fff", fontWeight: 700 }}>Tanár</TableCell>
+                      {(roleContext?.role === "TEACHER" ||
+                        roleContext?.role === "SYSADMIN") && (
+                        <TableCell
+                          sx={{ color: "#fff", fontWeight: 700 }}
+                          align="center"
+                        >
+                          Műveletek
+                        </TableCell>
+                      )}
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {jegyek.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                        <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                           <Typography color="text.secondary">
                             Nincsenek elérhető jegyek
                           </Typography>
@@ -230,54 +308,80 @@ useEffect(() => {
                         <TableRow
                           key={index}
                           sx={{
-                            '&:hover': {
-                              backgroundColor: '#e3f2fd',
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                              backgroundColor: "rgba(255,255,255,0.08)",
                             },
                           }}
                         >
-                          <TableCell sx={{ fontWeight: 500 }}>{j.targy}</TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>{j.subject}</TableCell>
                           <TableCell align="center">
                             <Typography
                               sx={{
                                 fontWeight: 700,
                                 color:
-                                  j.jegy >= 4
-                                    ? 'success.main'
-                                    : j.jegy >= 3
-                                    ? 'warning.main'
-                                    : 'error.main',
+                                  j.value >= 4
+                                    ? "success.main"
+                                    : j.value >= 3
+                                    ? "warning.main"
+                                    : "error.main",
                               }}
                             >
-                              {j.jegy}
+                              {j.value}
                             </Typography>
                           </TableCell>
-                          <TableCell>{j.datum}</TableCell>
-                          <TableCell>{j.megjegyzes}</TableCell>
+                          <TableCell>
+                            {j?.createdAt
+                              ? j.createdAt.toLocaleDateString("hu-HU")
+                              : "-"}
+                          </TableCell>
+                          <TableCell>{j.teacherName}</TableCell>
+                          {(roleContext?.role === "TEACHER" ||
+                            roleContext?.role === "SYSADMIN") && (
+                            <TableCell align="center">
+                              <Tooltip title="Törlés">
+                                <IconButton
+                                  color="error"
+                                  onClick={() => handleDeleteGrade(j.id)}
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))
                     )}
                   </TableBody>
                 </Table>
               </TableContainer>
+          )}
 
               {jegyek.length > 0 && (
-                <Card sx={{ mt: 3, backgroundColor: 'primary.light' }}>
+                <Card
+                  sx={{
+                    mt: 3,
+                    borderRadius: "16px",
+                    backdropFilter: "blur(10px)",
+                    background: "rgba(255,255,255,0.07)",
+                  }}
+                >
                   <CardContent>
-                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }}>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 700, color: "primary.main" }}
+                    >
                       Átlag: {atlag}
                     </Typography>
                   </CardContent>
                 </Card>
               )}
-            </>
-          )}
-        </Box>
 
-        <Box sx={{ textAlign: 'center', mt: 6, color: 'text.secondary' }}>
-          <Typography variant="body2">
-            © 2025 TanEdu | Hallgatói rendszer
-          </Typography>
-        </Box>
+          <Box sx={{ textAlign: "center", mt: 6, color: "text.secondary" }}>
+            <Typography variant="body2">
+              © 2025 TanEdu | Hallgatói rendszer
+            </Typography>
+          </Box>
       </Container>
     </Box>
   );

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+// ...existing code...
+import { useContext, useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -17,10 +18,11 @@ import {
   TextField,
   Alert,
   Container,
+  CircularProgress,
 } from '@mui/material';
-import AppBarNav from './components/AppBarNav';
 import { userAPI, authAPI } from "./API/ApiCalls";
 import type { Profile } from "./types/Profile";
+import { RoleContext } from "./App";
 
 
 export default function Adatok() {
@@ -29,6 +31,10 @@ export default function Adatok() {
   const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const token = localStorage.getItem("token")
+  const roleContext = useContext(RoleContext)
+  const isTeacher = roleContext?.role === "TEACHER" ? true : false
+  console.log(adatok);
+  
 
   const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -77,9 +83,11 @@ export default function Adatok() {
   if (!adatok) {
     return (
       <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
-        <AppBarNav />
         <Container maxWidth="lg" sx={{ pt: 4, pb: 6 }}>
-          <Typography variant="h6" color="text.secondary">
+          <Box sx={{ display: 'flex', justifyContent: 'center', pt: 6 }}>
+            <CircularProgress />
+          </Box>
+          <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
             Betöltés...
           </Typography>
         </Container>
@@ -89,10 +97,8 @@ export default function Adatok() {
 
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
-      <AppBarNav />
 
-      <Container maxWidth="lg" sx={{ pb: 6 }}>
-        <Box sx={{ mb: 4 }}>
+      <Container maxWidth="lg" sx={{ py: 6 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography
               variant="h4"
@@ -104,54 +110,72 @@ export default function Adatok() {
             >
               Személyes adatok
             </Typography>
+
             <Button
               variant="contained"
-              color="secondary"
+              color="primary"
               onClick={() => setShowChangePassword(true)}
+              sx={{ textTransform: 'none' }}
             >
               🔐 Jelszó megváltoztatása
             </Button>
           </Box>
 
-          <TableContainer component={Paper} sx={{ borderRadius: '12px', overflow: 'hidden' }}>
-            <Table>
-              <TableHead sx={{ backgroundColor: 'primary.main' }}>
-                <TableRow>
-                  <TableCell sx={{ color: '#fff', fontWeight: 700, width: '250px' }}>Mező</TableCell>
-                  <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Érték</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <TableRow sx={{ '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                  <TableCell sx={{ fontWeight: 600 }}>Teljes név</TableCell>
-                  <TableCell>{adatok.fullName}</TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                  <TableCell sx={{ fontWeight: 600 }}>Hallgatói azonosító</TableCell>
-                  <TableCell>{adatok.id}</TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                  <TableCell sx={{ fontWeight: 600 }}>Születés ideje</TableCell>
-                  <TableCell>{adatok.birthDate || "Nem megadott"}</TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                  <TableCell sx={{ fontWeight: 600 }}>E-mail cím</TableCell>
-                  <TableCell>{adatok.email}</TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:hover': { backgroundColor: '#e3f2fd' } }}>
-                  <TableCell sx={{ fontWeight: 600 }}>Osztály</TableCell>
-                  <TableCell>{adatok.departmentName}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
+          <Paper
+            sx={{
+              p: 2,
+              borderRadius: '16px',
+              backdropFilter: 'blur(12px)',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.06)',
+            }}
+            elevation={0}
+          >
+            <TableContainer component={Paper} sx={{ borderRadius: '12px', overflow: 'hidden', boxShadow: 'none' }}>
+              <Table>
+                <TableHead sx={{ backgroundColor: 'primary.main' }}>
+                  <TableRow>
+                    <TableCell sx={{ color: '#fff', fontWeight: 700, width: '240px' }}>Mező</TableCell>
+                    <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Érték</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow sx={{ '&:hover': { backgroundColor: "rgba(255,255,255,0.08)" } }}>
+                    <TableCell sx={{ fontWeight: 600 }}>Teljes név</TableCell>
+                    <TableCell>{adatok.fullName}</TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:hover': { backgroundColor: "rgba(255,255,255,0.08)" } }}>
+                    <TableCell sx={{ fontWeight: 600 }}>Hallgatói azonosító</TableCell>
+                    <TableCell>{adatok.id}</TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:hover': { backgroundColor: "rgba(255,255,255,0.08)" } }}>
+                    <TableCell sx={{ fontWeight: 600 }}>Születés ideje</TableCell>
+                    <TableCell>{adatok.birthDate || "Nem megadott"}</TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:hover': { backgroundColor: "rgba(255,255,255,0.08)" } }}>
+                    <TableCell sx={{ fontWeight: 600 }}>E-mail cím</TableCell>
+                    <TableCell>{adatok.email}</TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:hover': { backgroundColor: "rgba(255,255,255,0.08)" } }}>
+                    <TableCell sx={{ fontWeight: 600 }}>Osztály</TableCell>
+                    <TableCell>{adatok.departmentName}</TableCell>
+                  </TableRow>
+                  {isTeacher && 
+                  <TableRow sx={{ '&:hover': { backgroundColor: "rgba(255,255,255,0.08)" } }}>
+                    <TableCell sx={{ fontWeight: 600 }}>Specializáció</TableCell>
+                    <TableCell>{adatok.subject}</TableCell>
+                  </TableRow>
+                  }
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
 
-        <Box sx={{ textAlign: 'center', mt: 6, color: 'text.secondary' }}>
-          <Typography variant="body2">
-            © 2025 TanEdu | Hallgatói rendszer
-          </Typography>
-        </Box>
+          <Box sx={{ textAlign: 'center', mt: 6, color: 'text.secondary' }}>
+            <Typography variant="body2">
+              © 2025 TanEdu | Hallgatói rendszer
+            </Typography>
+          </Box>
       </Container>
 
       <Dialog
@@ -163,11 +187,11 @@ export default function Adatok() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem' }}>
+        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
           🔐 Jelszó megváltoztatása
         </DialogTitle>
-        <DialogContent sx={{ pt: 2 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <DialogContent sx={{ pt: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
               label="Új jelszó"
               type="password"
@@ -189,7 +213,7 @@ export default function Adatok() {
             )}
           </Box>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ pr: 3, pb: 2 }}>
           <Button
             onClick={() => {
               setShowChangePassword(false);

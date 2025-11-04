@@ -15,6 +15,12 @@ export const authAPI = {
   login: (email: string, password: string) =>
     axios.post(`${API_BASE_URL}/auth/login`, { email, password }),
 
+  createUser:(user:any)=>
+    axios.post(`${API_BASE_URL}/auth/register`,user, {
+      headers: getAuthHeaders(),
+  }),
+
+  
   changePassword: (password: string) =>
     axios.put(
       `${API_BASE_URL}/auth/change-password`,
@@ -76,17 +82,35 @@ export const gradeAPI = {
       headers: getAuthHeaders(),
     }),
 
+  getAllByStudentId: (studentId:number) =>
+    axios.get(`${API_BASE_URL}/grade/getAllByStudentId/${studentId}`, {
+      headers: getAuthHeaders(),
+  }),
+
+  getAllGradesByStudentEmail: (email:string) =>
+    axios.get(`${API_BASE_URL}/grade/getAllGradesByStudentEmail/${email}`, {
+      headers: getAuthHeaders(),
+  }),
+  getAllGradesForCurrentUserBySubject: (name:string) =>
+    axios.get(`${API_BASE_URL}/grade/getAllGradesBySubject/${name}`, {
+      headers: getAuthHeaders(),
+  }),
+  deleteGradeById: (id:number) =>
+    axios.delete(`${API_BASE_URL}/grade/deleteGradeById/${id}`, {
+      headers: getAuthHeaders(),
+  }),
+
   createGrade: (gradeData: {
     studentEmail: string;
     value: number;
-    comment: string;
+    subject: string;
   }) =>
     axios.post(
       `${API_BASE_URL}/grade/create`,
       {
         student: { email: gradeData.studentEmail },
         value: gradeData.value,
-        comment: gradeData.comment,
+        subject: gradeData.subject,
       },
       { headers: getAuthHeaders() }
     ),
@@ -95,7 +119,28 @@ export const gradeAPI = {
 // ============ COURSE/SCHEDULE API ============
 export const courseAPI = {
   getCourseByCurrentUser: () => {
-    return axios.get(`${API_BASE_URL}/course/getCourseByCurrentUser`, {
+    return axios.get(`${API_BASE_URL}/course/getCourseByDepartmentNameForCurrentUser`, {
+      headers: getAuthHeaders(),
+    });
+  },
+
+  getAttendanceCourses: (role: string) => {
+    const endpoint = role === "SYSADMIN" 
+      ? `${API_BASE_URL}/course/getAll`
+      : `${API_BASE_URL}/course/getByCurrentTeacher`;
+    
+    return axios.get(endpoint, {
+      headers: getAuthHeaders(),
+    });
+  },
+
+  getStudentsForCourses: (courseId: number) => {
+    return axios.get(`${API_BASE_URL}/course/${courseId}/students`, {
+      headers: getAuthHeaders(),
+    });
+  },
+  getCoursesByTeacher:()=>{
+    return axios.get(`${API_BASE_URL}/course/getByCurrentTeacher`, {
       headers: getAuthHeaders(),
     });
   },
@@ -107,6 +152,12 @@ export const courseAPI = {
       },
       headers: getAuthHeaders(),
     });
+  },
+
+  getAllAvailableSubjects:()=>{
+    return axios.get(`${API_BASE_URL}/users/getAllAvailableSubjects`, {
+          headers: getAuthHeaders(),
+        });
   },
 
   createCourse: (courseData: {
@@ -142,4 +193,21 @@ export const departmentAPI = {
     axios.get(`${API_BASE_URL}/departments/getAll`, {
       headers: getAuthHeaders(),
     }),
+  getClassLeader:(departmentName:string)=>
+    axios.get(`${API_BASE_URL}/departments/getDepartmentClassLeader/${departmentName}`, {
+        headers: getAuthHeaders(),
+    }),
+};
+
+export const uploadImage = async (file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await axios.post(`${API_BASE_URL}/upload`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data;
 };

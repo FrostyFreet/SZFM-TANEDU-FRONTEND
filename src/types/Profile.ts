@@ -7,4 +7,5 @@ export type Profile = {
   role: string
   departmentName: string
   fullName: string
+  subject?:string
 }
