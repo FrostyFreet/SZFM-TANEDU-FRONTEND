@@ -178,6 +178,10 @@ export const departmentAPI = {
     axios.get(`${API_BASE_URL}/departments/getAll`, {
       headers: getAuthHeaders(),
     }),
+  getClassLeader:(departmentName:string)=>
+    axios.get(`${API_BASE_URL}/departments/getDepartmentClassLeader/${departmentName}`, {
+        headers: getAuthHeaders(),
+    }),
 };
 
 export const uploadImage = async (file: File) => {
