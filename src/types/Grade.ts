@@ -1,6 +1,10 @@
 export type Grade = {
-  targy: string;
-  jegy: number;
-  datum: string;
-  megjegyzes: string;
+comment:string
+createdAt: Date | null
+id:number
+studentName:string
+teacherName:string
+value:number
+
+
 };

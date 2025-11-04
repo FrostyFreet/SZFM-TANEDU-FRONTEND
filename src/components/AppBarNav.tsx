@@ -40,6 +40,7 @@ export default function AppBarNav() {
     { icon: "📊", label: "Jegyek", path: "/jegyek" },
     { icon: "📩", label: "Üzenetek", path: "/uzenetek" },
     { icon: "👤", label: "Adatok", path: "/adatok" },
+    { icon: "✅", label: "Jelenlét", path: "/jelenlét" }
   ];
 
   return (

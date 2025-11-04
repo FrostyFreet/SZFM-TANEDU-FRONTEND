@@ -98,6 +98,20 @@ export const gradeAPI = {
       headers: getAuthHeaders(),
     }),
 
+  getAllByStudentId: (studentId:number) =>
+    axios.get(`${API_BASE_URL}/grade/getAllByStudentId/${studentId}`, {
+      headers: getAuthHeaders(),
+  }),
+
+  getAllGradesByStudentEmail: (email:string) =>
+    axios.get(`${API_BASE_URL}/grade/getAllGradesByStudentEmail/${email}`, {
+      headers: getAuthHeaders(),
+  }),
+  deleteGradeById: (id:number) =>
+    axios.delete(`${API_BASE_URL}/grade/deleteGradeById/${id}`, {
+      headers: getAuthHeaders(),
+  }),
+
   createGrade: (gradeData: {
     studentEmail: string;
     value: number;
@@ -117,7 +131,23 @@ export const gradeAPI = {
 // ============ COURSE/SCHEDULE API ============
 export const courseAPI = {
   getCourseByCurrentUser: () => {
-    return axios.get(`${API_BASE_URL}/course/getCourseByCurrentUser`, {
+    return axios.get(`${API_BASE_URL}/course/getCourseByDepartmentNameForCurrentUser`, {
+      headers: getAuthHeaders(),
+    });
+  },
+
+  getAttendanceCourses: (role: string) => {
+    const endpoint = role === "SYSADMIN" 
+      ? `${API_BASE_URL}/course/getAll`
+      : `${API_BASE_URL}/course/getByCurrentTeacher`;
+    
+    return axios.get(endpoint, {
+      headers: getAuthHeaders(),
+    });
+  },
+
+  getStudentsForCourses: (courseId: number) => {
+    return axios.get(`${API_BASE_URL}/course/${courseId}/students`, {
       headers: getAuthHeaders(),
     });
   },
@@ -129,6 +159,12 @@ export const courseAPI = {
       },
       headers: getAuthHeaders(),
     });
+  },
+
+  getAllAvailableSubjects:()=>{
+    return axios.get(`${API_BASE_URL}/users/getAllAvailableSubjects`, {
+          headers: getAuthHeaders(),
+        });
   },
 
   createCourse: (courseData: {
