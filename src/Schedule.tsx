@@ -35,6 +35,7 @@ import type { ScheduleRow, CourseApi, DayKey } from "./types/Schedule";
 import { RoleContext } from "./App";
 import { courseAPI, departmentAPI, userAPI } from "./API/ApiCalls";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 
 
 export default function Schedule() {
@@ -51,11 +52,12 @@ export default function Schedule() {
   const [selectedMenuCourse, setSelectedMenuCourse] = useState<CourseApi | null>(null);
   const durationList = ["8:00-8:45", "9:00-9:45", "10:00-10:45","11:00-11:45","12:00-12:45","13:00-13:45","14:00-14:45"]
   const isTeacher = roleContext?.role === "TEACHER" ? true : false
-
+  const navigate = useNavigate()
+  
   const [newCourse, setNewCourse] = useState({
     name: "",
     day: "hétfő",
-    duration: "08:00-8:45",
+    duration: durationList[0],
     teacherName: "",
     departmentName: ""
   });
@@ -236,14 +238,34 @@ export default function Schedule() {
       setNewCourse({
         name: "",
         day: "hétfő",
-        duration: "08:00-8:45",
+        duration: durationList[0],
         teacherName: "",
         departmentName: ""
       });
-      window.location.reload();
-    } catch (error) {
-      console.error("Failed to create course:", error);
-      alert("Ebben az időpontban már van óra!");
+      navigate(0)
+    } catch (error:any) {
+     console.error("Failed to create course:", error);
+    const raw = error?.response?.data?.message || error?.response?.data?.error || error?.response?.data || error?.message || "";
+    console.log(error);
+    
+    let msg = String(raw);
+
+    if (/Teacher not found/i.test(msg)) {
+      msg = "Oktató nem található. Ellenőrizd az oktató adatait.";
+    } else if (/student.*teacher|cannot be assigned as a teacher/i.test(msg)) {
+      msg = "Nem állíthatsz be tanulót oktatóként.";
+    } else if (/Invalid subject/i.test(msg)) {
+      msg = "Érvénytelen tárgynév.";
+    } else if (/does not teach.*subject|doesn't teach this subject/i.test(msg)) {
+      msg = "A kiválasztott oktató nem tanítja ezt a tárgyat.";
+    } else if (/already has a course/i.test(msg)) {
+      // Extract details from the error message if present
+      msg = "Az oktatónak vagy az osztálynak már van órája ebben az időpontban.";
+    } else if (!msg) {
+      msg = "Hiba történt az óra létrehozása közben.";
+    }
+
+    alert(msg);
     }
   };
 
@@ -428,8 +450,8 @@ export default function Schedule() {
                     label="Osztály / Csoport"
                     onChange={(e) => setSelectedDepartment(e.target.value)}
                   >
-                    {departments.map((dept) => (
-                      <MenuItem key={dept} value={dept}>
+                    {departments.map((dept, idx) => (
+                      <MenuItem key={idx} value={dept}>
                         {dept}
                       </MenuItem>
                     ))}
