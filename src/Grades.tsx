@@ -43,9 +43,9 @@ export default function Grades() {
   const [newGrade, setNewGrade] = useState({
     studentEmail: "",
     value: "",
-    comment: "",
+    subject: "",
   });
-
+  
   const { data: fetchedSubjects } = useQuery({
     queryKey: ["subject", token],
     queryFn: async () => {
@@ -57,7 +57,7 @@ export default function Grades() {
     enabled:
       !!token &&
       (roleContext?.role === "SYSADMIN" || roleContext?.role === "TEACHER"),
-  });
+  });  
 
   const { data: fetchedGrades, isLoading, refetch } = useQuery({
     queryKey: ["grades", token, selectedUser],
@@ -72,7 +72,7 @@ export default function Grades() {
     },
     enabled: !!token && (roleContext?.role === "SYSADMIN" ? !!selectedUser : true),
   });
-
+  
   const { data: fetchedStudents = [] } = useQuery({
     queryKey: ["students", token],
     queryFn: async () => {
@@ -87,7 +87,7 @@ export default function Grades() {
       setJegyek(
         fetchedGrades.map((item: any) => ({
           id: item.id,
-          comment: item.comment || "Ismeretlen",
+          subject: item.subject || "Ismeretlen",
           createdAt: item.createdAt ? new Date(item.createdAt) : null,
           studentName: item.studentName || "Nincs adat",
           teacherName: item.teacherName || "Nincs adat",
@@ -214,10 +214,10 @@ export default function Grades() {
               <FormControl fullWidth>
                 <InputLabel>Tantárgy</InputLabel>
                 <Select
-                  value={newGrade.comment}
+                  value={newGrade.subject}
                   label="Tantárgy"
                   onChange={(e) =>
-                    setNewGrade({ ...newGrade, comment: e.target.value })
+                    setNewGrade({ ...newGrade, subject: e.target.value })
                   }
                 >
                   {fetchedSubjects?.map((subject) => (
@@ -242,7 +242,7 @@ export default function Grades() {
                     await gradeAPI.createGrade({
                       studentEmail: newGrade.studentEmail,
                       value: parseInt(newGrade.value),
-                      comment: newGrade.comment,
+                      subject: newGrade.subject,
                     });
                     alert("Jegy sikeresen hozzáadva!");
                     setShowCreateGradeModal(false);
@@ -314,7 +314,7 @@ export default function Grades() {
                             },
                           }}
                         >
-                          <TableCell sx={{ fontWeight: 500 }}>{j.comment}</TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>{j.subject}</TableCell>
                           <TableCell align="center">
                             <Typography
                               sx={{

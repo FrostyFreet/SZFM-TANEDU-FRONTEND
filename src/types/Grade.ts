@@ -1,5 +1,5 @@
 export type Grade = {
-comment:string
+subject:string
 createdAt: Date | null
 id:number
 studentName:string

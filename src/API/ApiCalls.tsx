@@ -85,6 +85,10 @@ export const gradeAPI = {
     axios.get(`${API_BASE_URL}/grade/getAllGradesByStudentEmail/${email}`, {
       headers: getAuthHeaders(),
   }),
+  getAllGradesForCurrentUserBySubject: (name:string) =>
+    axios.get(`${API_BASE_URL}/grade/getAllGradesBySubject/${name}`, {
+      headers: getAuthHeaders(),
+  }),
   deleteGradeById: (id:number) =>
     axios.delete(`${API_BASE_URL}/grade/deleteGradeById/${id}`, {
       headers: getAuthHeaders(),
@@ -93,14 +97,14 @@ export const gradeAPI = {
   createGrade: (gradeData: {
     studentEmail: string;
     value: number;
-    comment: string;
+    subject: string;
   }) =>
     axios.post(
       `${API_BASE_URL}/grade/create`,
       {
         student: { email: gradeData.studentEmail },
         value: gradeData.value,
-        comment: gradeData.comment,
+        subject: gradeData.subject,
       },
       { headers: getAuthHeaders() }
     ),
