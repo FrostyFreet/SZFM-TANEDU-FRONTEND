@@ -20,7 +20,6 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  TextField,
   IconButton,
   Tooltip,
   Menu,
@@ -50,6 +49,8 @@ export default function Schedule() {
   const [teachersList, setTeachersList] = useState<string[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedMenuCourse, setSelectedMenuCourse] = useState<CourseApi | null>(null);
+  const durationList = ["8:00-8:45", "9:00-9:45", "10:00-10:45","11:00-11:45","12:00-12:45","13:00-13:45","14:00-14:45"]
+  const isTeacher = roleContext?.role === "TEACHER" ? true : false
 
   const [newCourse, setNewCourse] = useState({
     name: "",
@@ -84,6 +85,14 @@ export default function Schedule() {
       return Array.isArray(response.data) ? response.data : [];
     },
     enabled: !!token,
+  });
+  const { data: coursesByTeacher = [] } = useQuery({
+    queryKey: ["coursesByTeacher", token],
+    queryFn: async () => {
+      const res = await courseAPI.getCoursesByTeacher();
+      return Array.isArray(res?.data) ? res.data : [];
+    },
+    enabled: !!token && isTeacher,
   });
 
   useEffect(() => {
@@ -122,16 +131,42 @@ export default function Schedule() {
     enabled: !!token,
   });
 
+  const coursesSource = isTeacher ? coursesByTeacher : fetchedCourses;
+
   useEffect(() => {
-    const courses = fetchedCourses;
+    const courses = coursesSource || [];
     const durations: string[] = [];
-    
+
     for (const c of courses) {
-      if (!durations.includes(c.duration)) durations.push(c.duration);
+      const dur = (c.duration ?? "").toString().trim();
+      if (dur && !durations.includes(dur)) durations.push(dur);
     }
 
+    // helper to parse times like "9:00-9:45" or "09:00 - 09:45"
+    const timeToMinutes = (time: string) => {
+      const m = time.match(/(\d{1,2}):(\d{2})/);
+      if (!m) return Number.POSITIVE_INFINITY;
+      return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+    };
+    const startMinutes = (range: string) => {
+      const match = range.match(/(\d{1,2}:\d{2})/);
+      return match ? timeToMinutes(match[1]) : Number.POSITIVE_INFINITY;
+    };
+    const endMinutes = (range: string) => {
+      const matches = range.match(/(\d{1,2}:\d{2})/g);
+      return matches && matches[1] ? timeToMinutes(matches[1]) : Number.POSITIVE_INFINITY;
+    };
+
+    // sort durations by start time (then by end time)
+    durations.sort((a, b) => {
+      const sa = startMinutes(a);
+      const sb = startMinutes(b);
+      if (sa !== sb) return sa - sb;
+      return endMinutes(a) - endMinutes(b);
+    });
+
     const mapDayToKey = (day: string): DayKey => {
-      const d = day.trim().toLowerCase();
+      const d = (day || "").toString().toLowerCase().trim();
       if (d.startsWith("hét") || d === "hetfo" || d === "hétfő") return "hetfo";
       if (d.startsWith("ked")) return "kedd";
       if (d.startsWith("sze")) return "szerda";
@@ -149,13 +184,13 @@ export default function Schedule() {
         csutortok: [],
         pentek: [],
       };
-      
+
       for (const c of courses) {
-        if (c.duration !== duration) continue;
+        if ((c.duration ?? "").toString().trim() !== duration) continue;
         const key = mapDayToKey(c.day);
         base[key].push(c);
       }
-      
+
       return base;
     });
 
@@ -692,14 +727,21 @@ export default function Schedule() {
                   <MenuItem value="péntek">Péntek</MenuItem>
                 </Select>
               </FormControl>
-              <TextField
-                label="Időtartam"
-                value={newCourse.duration}
-                onChange={(e) => setNewCourse({ ...newCourse, duration: e.target.value })}
-                placeholder="pl. 09:00-10:30"
-                fullWidth
-                required
-              />
+              <FormControl fullWidth required>
+                <InputLabel>Időtartam</InputLabel>
+                <Select
+                  value={newCourse.duration}
+                  label="Időtartam"
+                  onChange={(e) => setNewCourse({ ...newCourse, duration: e.target.value })}
+                >
+                  {durationList.map((duration) => (
+                    <MenuItem key={duration} value={duration}>
+                      {duration}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
               <FormControl fullWidth required>
                 <InputLabel>Oktató</InputLabel>
                 <Select

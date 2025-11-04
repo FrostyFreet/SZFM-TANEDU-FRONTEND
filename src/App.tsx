@@ -12,6 +12,7 @@ import { Box } from "@mui/material"
 import { userAPI, authAPI } from "./API/ApiCalls"
 import Attendance from "./Attendance"
 import UploadPage from "./UploadPage"
+import CreateUser from "./CreateUser"
 
 export const RoleContext = createContext<{
   role: string | null;
@@ -159,6 +160,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <UploadPage/>
+                  </ProtectedRoute>
+                }
+                />
+                <Route
+                path="/register"
+                element={
+                  <ProtectedRoute>
+                    <CreateUser/>
                   </ProtectedRoute>
                 }
                 />

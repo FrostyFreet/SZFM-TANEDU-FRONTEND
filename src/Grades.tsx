@@ -377,8 +377,6 @@ export default function Grades() {
                 </Card>
               )}
 
-          )
-
           <Box sx={{ textAlign: "center", mt: 6, color: "text.secondary" }}>
             <Typography variant="body2">
               © 2025 TanEdu | Hallgatói rendszer

@@ -18,9 +18,10 @@ import {
   CloudUpload,
   Menu as MenuIcon,
 } from "@mui/icons-material";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
+import { RoleContext } from "../App";
 
 const navItems = [
   { text: "Kezdőlap", icon: <Home />, path: "/home" },
@@ -30,11 +31,20 @@ const navItems = [
   { text: "Jelenlét", icon: <CheckCircle />, path: "/jelenlét" },
   { text: "HIányzás-feltöltés", icon: <CloudUpload />, path: "/feltoltes" },
   { text: "Adatok", icon: <AccountCircle />, path: "/adatok" },
+  { text: "Felhasználó létrehozás", icon: <AccountCircle />, path: "/register" },
 ];
 
 export default function AppBarNav() {
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
+  const roleContext = useContext(RoleContext);
+
+  const filteredNavItems = navItems.filter((item) => {
+    if (item.path === "/register") {
+      return roleContext?.role === "SYSADMIN";
+    }
+    return true;
+  });
 
   return (
     <motion.div
@@ -82,7 +92,7 @@ export default function AppBarNav() {
         </Box>
 
         <List sx={{ mt: 2 }}>
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <ListItemButton
               key={item.text}
               onClick={() => navigate(item.path)}

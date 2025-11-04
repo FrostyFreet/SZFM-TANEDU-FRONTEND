@@ -15,6 +15,12 @@ export const authAPI = {
   login: (email: string, password: string) =>
     axios.post(`${API_BASE_URL}/auth/login`, { email, password }),
 
+  createUser:(user:any)=>
+    axios.post(`${API_BASE_URL}/auth/register`,user, {
+      headers: getAuthHeaders(),
+  }),
+
+  
   changePassword: (password: string) =>
     axios.put(
       `${API_BASE_URL}/auth/change-password`,
@@ -130,6 +136,11 @@ export const courseAPI = {
 
   getStudentsForCourses: (courseId: number) => {
     return axios.get(`${API_BASE_URL}/course/${courseId}/students`, {
+      headers: getAuthHeaders(),
+    });
+  },
+  getCoursesByTeacher:()=>{
+    return axios.get(`${API_BASE_URL}/course/getByCurrentTeacher`, {
       headers: getAuthHeaders(),
     });
   },

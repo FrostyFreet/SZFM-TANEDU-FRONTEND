@@ -1,5 +1,5 @@
 // ...existing code...
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import { userAPI, authAPI } from "./API/ApiCalls";
 import type { Profile } from "./types/Profile";
+import { RoleContext } from "./App";
 
 
 export default function Adatok() {
@@ -30,6 +31,10 @@ export default function Adatok() {
   const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const token = localStorage.getItem("token")
+  const roleContext = useContext(RoleContext)
+  const isTeacher = roleContext?.role === "TEACHER" ? true : false
+  console.log(adatok);
+  
 
   const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -155,6 +160,12 @@ export default function Adatok() {
                     <TableCell sx={{ fontWeight: 600 }}>Osztály</TableCell>
                     <TableCell>{adatok.departmentName}</TableCell>
                   </TableRow>
+                  {isTeacher && 
+                  <TableRow sx={{ '&:hover': { backgroundColor: "rgba(255,255,255,0.08)" } }}>
+                    <TableCell sx={{ fontWeight: 600 }}>Specializáció</TableCell>
+                    <TableCell>{adatok.subject}</TableCell>
+                  </TableRow>
+                  }
                 </TableBody>
               </Table>
             </TableContainer>
