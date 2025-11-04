@@ -33,8 +33,6 @@ export default function Adatok() {
   const token = localStorage.getItem("token")
   const roleContext = useContext(RoleContext)
   const isTeacher = roleContext?.role === "TEACHER" ? true : false
-  console.log(adatok);
-  
 
   const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {

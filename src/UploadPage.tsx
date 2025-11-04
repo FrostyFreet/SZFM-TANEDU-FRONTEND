@@ -40,10 +40,6 @@ export default function UploadPage() {
     enabled: !!localStorage.getItem('token') && !!departmentName,
     staleTime: 5 * 60 * 1000,
   })
-  console.log(departmentName);
-  console.log(classLeaderEmail);
-  
-
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files && e.target.files[0];
