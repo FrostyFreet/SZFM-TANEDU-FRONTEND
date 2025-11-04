@@ -268,10 +268,10 @@ export default function Schedule() {
           {roleContext?.role === "SYSADMIN" && (
             <Box sx={{ mb: 4, display: 'flex', gap: 2, alignItems: 'flex-end', flexWrap: 'wrap' }}>
               <FormControl sx={{ minWidth: 250 }}>
-                <InputLabel>Osztály / Csoport</InputLabel>
+                <InputLabel>Osztály</InputLabel>
                 <Select
                   value={selectedDepartment}
-                  label="Osztály / Csoport"
+                  label="Osztály"
                   onChange={(e) => setSelectedDepartment(e.target.value)}
                 >
                   {departments.map((dept) => (
@@ -385,7 +385,7 @@ export default function Schedule() {
               </Box>
               <Box>
                 <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
-                  Osztály / csoport:
+                  Osztály:
                 </Typography>
                 <Typography variant="body1">{selectedCourse?.departmentName}</Typography>
               </Box>
