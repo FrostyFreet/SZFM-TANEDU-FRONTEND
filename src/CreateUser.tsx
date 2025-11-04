@@ -19,8 +19,6 @@ import { RoleContext } from "./App";
 
 export default function CreateUser() {
   const roleContext = useContext(RoleContext);
-  if (roleContext?.role !== "SYSADMIN") return null;
-
   const token = localStorage.getItem("token");
 
   const { data: fetchedSubjects } = useQuery({
@@ -52,6 +50,7 @@ export default function CreateUser() {
     lastName: "",
     password: "",
     role: "STUDENT",
+    birth_date:"",
     subject: "",
     departmentId: "" as number | "",
     classLeaderOfId: "" as number | "",
@@ -61,11 +60,33 @@ export default function CreateUser() {
 
   const roles = ["STUDENT", "TEACHER", "SYSADMIN", "CLASSLEADER"];
 
-  const validate = () => {
+ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+ const validate = () => {
     if (!form.email || !form.firstName || !form.lastName || !form.password || !form.role) {
       setMessage({ type: "error", text: "Tölts ki minden kötelező mezőt!" });
       return false;
+   }
+
+    if (!emailRegex.test(form.email)) {
+      setMessage({ type: "error", text: "Érvénytelen e-mail cím." });
+      return false;
     }
+
+    if (!form.birth_date) {
+      setMessage({ type: "error", text: "Add meg a születési dátumot." });
+      return false;
+    }
+
+    const birth = new Date(form.birth_date);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    birth.setHours(0,0,0,0);
+    if (birth > today) {
+      setMessage({ type: "error", text: "A születési dátum nem lehet a jövőben." });
+      return false;
+    }
+
     if (form.role === "TEACHER" && !form.subject) {
       setMessage({ type: "error", text: "Tanár szerephez add meg a tantárgyat!" });
       return false;
@@ -74,7 +95,7 @@ export default function CreateUser() {
       setMessage({ type: "error", text: "Osztályfőnök szerephez válassz egy osztályt!" });
       return false;
     }
-    return true;
+   return true;
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -86,13 +107,13 @@ export default function CreateUser() {
       email: form.email,
       firstName: form.firstName,
       lastName: form.lastName,
+      birthDate:form.birth_date,
       password: form.password,
       role: form.role,
     };
     if (form.role === "TEACHER") payload.subject = form.subject;
     if (form.departmentId) payload.department = { id: Number(form.departmentId) };
     if (form.role === "CLASSLEADER" && form.classLeaderOfId) {
-      // backend expects classLeaderOf object with id
       payload.classLeaderOf = { id: Number(form.classLeaderOfId) };
     }
 
@@ -107,6 +128,7 @@ export default function CreateUser() {
           lastName: "",
           password: "",
           role: "STUDENT",
+          birth_date:"",
           subject: "",
           departmentId: "",
           classLeaderOfId: "",
@@ -121,6 +143,8 @@ export default function CreateUser() {
       setLoading(false);
     }
   };
+
+  if (roleContext?.role !== "SYSADMIN") return null;
 
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh", py: 6 }}>
@@ -162,6 +186,19 @@ export default function CreateUser() {
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 fullWidth
                 required
+              />
+               <TextField
+                label="Születési idő"
+                type="date"
+                value={form.birth_date}
+                onChange={(e) => setForm({ ...form, birth_date: e.target.value })}
+                fullWidth
+                required
+                slotProps={{
+                  inputLabel:{
+                    shrink:true
+                  }
+                }}
               />
 
               <FormControl fullWidth required>
@@ -248,6 +285,7 @@ export default function CreateUser() {
                       password: "",
                       role: "STUDENT",
                       subject: "",
+                      birth_date:"",
                       departmentId: "",
                       classLeaderOfId: "",
                     })
