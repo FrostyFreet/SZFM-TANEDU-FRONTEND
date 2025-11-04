@@ -15,7 +15,6 @@ import {
   CircularProgress,
   Autocomplete,
 } from "@mui/material";
-import { motion } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { userAPI, messageAPI } from "./API/ApiCalls";
 import type { Conversation, Message } from "./types/Messages";
@@ -146,10 +145,7 @@ export default function Messages() {
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
       <Container maxWidth="lg" sx={{ pb: 6 }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        
           <Typography
             variant="h4"
             gutterBottom
@@ -391,7 +387,6 @@ export default function Messages() {
               </Paper>
             </Box>
           )}
-        </motion.div>
 
         <Dialog
           open={showNewMsgModal}

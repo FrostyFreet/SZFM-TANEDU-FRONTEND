@@ -32,7 +32,6 @@ import { RoleContext } from "./App";
 import { courseAPI, userAPI, gradeAPI } from "./API/ApiCalls";
 import type { Grade } from "./types/Grade";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 
 export default function Grades() {
   const [jegyek, setJegyek] = useState<Grade[]>([]);
@@ -134,10 +133,6 @@ export default function Grades() {
     >
 
       <Container maxWidth="lg" sx={{ py: 6 }}>
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
           <Typography
             variant="h4"
             gutterBottom
@@ -268,11 +263,6 @@ export default function Grades() {
               <CircularProgress />
             </Box>
           ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-            >
               <TableContainer
                 component={Paper}
                 sx={{
@@ -365,6 +355,7 @@ export default function Grades() {
                   </TableBody>
                 </Table>
               </TableContainer>
+          )}
 
               {jegyek.length > 0 && (
                 <Card
@@ -385,15 +376,14 @@ export default function Grades() {
                   </CardContent>
                 </Card>
               )}
-            </motion.div>
-          )}
+
+          )
 
           <Box sx={{ textAlign: "center", mt: 6, color: "text.secondary" }}>
             <Typography variant="body2">
               © 2025 TanEdu | Hallgatói rendszer
             </Typography>
           </Box>
-        </motion.div>
       </Container>
     </Box>
   );

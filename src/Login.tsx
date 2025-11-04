@@ -9,7 +9,6 @@ import {
   Alert,
   Container,
 } from "@mui/material";
-import { motion } from "framer-motion";
 import { RoleContext } from "./App";
 import { authAPI } from "./API/ApiCalls";
 
@@ -51,11 +50,6 @@ export default function Login() {
           backdropFilter: "blur(10px)",
         }}
       >
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ width: "100%" }}
-        >
           <Paper
             elevation={0}
             sx={{
@@ -132,7 +126,6 @@ export default function Login() {
               © 2025 TanEdu | Hallgatói rendszer
             </Typography>
           </Paper>
-        </motion.div>
       </Box>
     </Container>
   );

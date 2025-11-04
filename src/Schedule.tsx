@@ -32,7 +32,6 @@ import type { ScheduleRow, CourseApi, DayKey } from "./types/Schedule";
 import { RoleContext } from "./App";
 import { courseAPI, departmentAPI, userAPI } from "./API/ApiCalls";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 
 
 export default function Schedule() {
@@ -265,10 +264,6 @@ export default function Schedule() {
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
 
       <Container maxWidth="lg" sx={{ pb: 6 }}>
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
           <Box sx={{ mb: 4 }}>
             <Typography
               variant="h4"
@@ -387,7 +382,6 @@ export default function Schedule() {
               </TableContainer>
             </Paper>
           </Box>
-        </motion.div>
 
         {/* Course Details Modal */}
         <Dialog

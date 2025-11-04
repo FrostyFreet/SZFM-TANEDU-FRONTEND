@@ -20,7 +20,6 @@ import {
   Container,
   CircularProgress,
 } from '@mui/material';
-import { motion } from "framer-motion";
 import { userAPI, authAPI } from "./API/ApiCalls";
 import type { Profile } from "./types/Profile";
 
@@ -95,10 +94,6 @@ export default function Adatok() {
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
 
       <Container maxWidth="lg" sx={{ py: 6 }}>
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography
               variant="h4"
@@ -170,7 +165,6 @@ export default function Adatok() {
               © 2025 TanEdu | Hallgatói rendszer
             </Typography>
           </Box>
-        </motion.div>
       </Container>
 
       <Dialog

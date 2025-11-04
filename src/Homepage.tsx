@@ -1,13 +1,7 @@
 import { Typography, Paper } from "@mui/material";
-import { motion } from "framer-motion";
 
 export default function Homepage() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
       <Paper
         elevation={0}
         sx={{
@@ -25,6 +19,5 @@ export default function Homepage() {
           Válassz egy menüpontot a bal oldali navigációból.
         </Typography>
       </Paper>
-    </motion.div>
   );
 }
