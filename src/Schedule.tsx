@@ -1,3 +1,4 @@
+// ...existing code...
 import { useContext, useEffect, useState } from "react";
 import {
   Box,
@@ -27,11 +28,11 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import AppBarNav from './components/AppBarNav';
 import type { ScheduleRow, CourseApi, DayKey } from "./types/Schedule";
 import { RoleContext } from "./App";
 import { courseAPI, departmentAPI, userAPI } from "./API/ApiCalls";
 import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 
 
 export default function Schedule() {
@@ -222,6 +223,7 @@ export default function Schedule() {
               justifyContent: 'space-between',
               alignItems: 'center',
               gap: 1,
+              py: 0.5,
             }}
           >
             <Typography
@@ -229,8 +231,12 @@ export default function Schedule() {
               sx={{
                 cursor: 'pointer',
                 color: 'primary.main',
-                fontWeight: 500,
+                fontWeight: 600,
                 flex: 1,
+                fontSize: '0.95rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
                 '&:hover': {
                   textDecoration: 'underline',
                 },
@@ -243,7 +249,7 @@ export default function Schedule() {
                 <IconButton
                   size="small"
                   onClick={(e) => handleMenuOpen(e, course)}
-                  sx={{ opacity: 0.6, '&:hover': { opacity: 1 } }}
+                  sx={{ opacity: 0.65, '&:hover': { opacity: 1 } }}
                 >
                   <MoreVertIcon fontSize="small" />
                 </IconButton>
@@ -257,109 +263,131 @@ export default function Schedule() {
 
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
-      <AppBarNav />
 
       <Container maxWidth="lg" sx={{ pb: 6 }}>
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{
-              fontWeight: 700,
-              color: 'primary.main',
-              mb: 3,
-            }}
-          >
-            Órarend
-          </Typography>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Box sx={{ mb: 4 }}>
+            <Typography
+              variant="h4"
+              gutterBottom
+              sx={{
+                fontWeight: 700,
+                color: 'primary.main',
+                mb: 3,
+              }}
+            >
+              Órarend
+            </Typography>
 
-          {roleContext?.role === "SYSADMIN" && (
-            <Box sx={{ mb: 4, display: 'flex', gap: 2, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-              <FormControl sx={{ minWidth: 250 }}>
-                <InputLabel>Osztály / Csoport</InputLabel>
-                <Select
-                  value={selectedDepartment}
-                  label="Osztály / Csoport"
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
+            {roleContext?.role === "SYSADMIN" && (
+              <Box sx={{ mb: 4, display: 'flex', gap: 2, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                <FormControl sx={{ minWidth: 250 }}>
+                  <InputLabel>Osztály / Csoport</InputLabel>
+                  <Select
+                    value={selectedDepartment}
+                    label="Osztály / Csoport"
+                    onChange={(e) => setSelectedDepartment(e.target.value)}
+                  >
+                    {departments.map((dept) => (
+                      <MenuItem key={dept} value={dept}>
+                        {dept}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<AddIcon />}
+                  onClick={() => setShowCreateCourseModal(true)}
+                  size="large"
                 >
-                  {departments.map((dept) => (
-                    <MenuItem key={dept} value={dept}>
-                      {dept}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  Új órarend
+                </Button>
+              </Box>
+            )}
 
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<AddIcon />}
-                onClick={() => setShowCreateCourseModal(true)}
-                size="large"
-              >
-                Új órarend
-              </Button>
-            </Box>
-          )}
-
-          <TableContainer component={Paper} sx={{ borderRadius: '12px', overflow: 'hidden' }}>
-            <Table>
-              <TableHead sx={{ backgroundColor: 'primary.main' }}>
-                <TableRow>
-                  <TableCell sx={{ color: '#fff', fontWeight: 700, width: '120px' }}>
-                    Időpont
-                  </TableCell>
-                  <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Hétfő</TableCell>
-                  <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Kedd</TableCell>
-                  <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Szerda</TableCell>
-                  <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Csütörtök</TableCell>
-                  <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Péntek</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {rows.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
-                      <Typography color="text.secondary">
-                        Nincs elérhető órarend
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  rows.map((r, i) => (
-                    <TableRow
-                      key={i}
-                      sx={{
-                        '&:hover': {
-                          backgroundColor: '#e3f2fd',
-                        },
-                      }}
-                    >
-                      <TableCell sx={{ fontWeight: 700, verticalAlign: 'top' }}>
-                        {r.duration}
+            <Paper
+              sx={{
+                borderRadius: '16px',
+                overflow: 'hidden',
+                backdropFilter: 'blur(12px)',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.06)',
+              }}
+              elevation={0}
+            >
+              <TableContainer component={Paper} sx={{ borderRadius: '12px', overflow: 'hidden', boxShadow: 'none' }}>
+                <Table>
+                  <TableHead sx={{ backgroundColor: 'primary.main' }}>
+                    <TableRow>
+                      <TableCell sx={{ color: '#fff', fontWeight: 700, width: '120px' }}>
+                        Időpont
                       </TableCell>
-                      <TableCell sx={{ verticalAlign: 'top' }}>
-                        {renderDayCell(r.hetfo)}
-                      </TableCell>
-                      <TableCell sx={{ verticalAlign: 'top' }}>
-                        {renderDayCell(r.kedd)}
-                      </TableCell>
-                      <TableCell sx={{ verticalAlign: 'top' }}>
-                        {renderDayCell(r.szerda)}
-                      </TableCell>
-                      <TableCell sx={{ verticalAlign: 'top' }}>
-                        {renderDayCell(r.csutortok)}
-                      </TableCell>
-                      <TableCell sx={{ verticalAlign: 'top' }}>
-                        {renderDayCell(r.pentek)}
-                      </TableCell>
+                      <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Hétfő</TableCell>
+                      <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Kedd</TableCell>
+                      <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Szerda</TableCell>
+                      <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Csütörtök</TableCell>
+                      <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Péntek</TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
+                  </TableHead>
+                  <TableBody>
+                    {rows.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                          <Typography color="text.secondary">
+                            Nincs elérhető órarend
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      rows.map((r, i) => (
+                        <TableRow
+                          key={i}
+                          sx={{
+                            transition: 'background-color 0.15s ease, color 0.15s ease',
+                            '&:hover': {
+                              backgroundColor: (theme) =>
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(255,255,255,0.03)'
+                                  : 'rgba(227,242,253,0.45)',
+                            },
+                            '&:hover td, &:hover p, &:hover span': {
+                              color: (theme) => theme.palette.text.primary,
+                            },
+                          }}
+                        >
+                          <TableCell sx={{ fontWeight: 700, verticalAlign: 'top' }}>
+                            {r.duration}
+                          </TableCell>
+                          <TableCell sx={{ verticalAlign: 'top' }}>
+                            {renderDayCell(r.hetfo)}
+                          </TableCell>
+                          <TableCell sx={{ verticalAlign: 'top' }}>
+                            {renderDayCell(r.kedd)}
+                          </TableCell>
+                          <TableCell sx={{ verticalAlign: 'top' }}>
+                            {renderDayCell(r.szerda)}
+                          </TableCell>
+                          <TableCell sx={{ verticalAlign: 'top' }}>
+                            {renderDayCell(r.csutortok)}
+                          </TableCell>
+                          <TableCell sx={{ verticalAlign: 'top' }}>
+                            {renderDayCell(r.pentek)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          </Box>
+        </motion.div>
 
         {/* Course Details Modal */}
         <Dialog
@@ -437,9 +465,7 @@ export default function Schedule() {
                   label="Tárgy neve"
                   onChange={(e) => setNewCourse({ ...newCourse, name: e.target.value })}
                 >
-                  {fetchedSubjects?.map((subject)=>(
-                    <MenuItem key={subject} value={subject}>{subject}</MenuItem>
-                  ))}
+                  {fetchedSubjects?.map((subject)=>(<MenuItem key={subject} value={subject}>{subject}</MenuItem>))}
                 </Select>
               </FormControl>
               <FormControl fullWidth required>
@@ -471,11 +497,7 @@ export default function Schedule() {
                   label="Oktató"
                   onChange={(e) => setNewCourse({ ...newCourse, teacherName: e.target.value })}
                 >
-                  {teachersList.map((teacher) => (
-                    <MenuItem key={teacher} value={teacher}>
-                      {teacher}
-                    </MenuItem>
-                  ))}
+                  {teachersList.map((teacher) => (<MenuItem key={teacher} value={teacher}>{teacher}</MenuItem>))}
                 </Select>
               </FormControl>
               <FormControl fullWidth required>
@@ -485,11 +507,7 @@ export default function Schedule() {
                   label="Osztály"
                   onChange={(e) => setNewCourse({ ...newCourse, departmentName: e.target.value })}
                 >
-                  {departments.map((dept) => (
-                    <MenuItem key={dept} value={dept}>
-                      {dept}
-                    </MenuItem>
-                  ))}
+                  {departments.map((dept) => (<MenuItem key={dept} value={dept}>{dept}</MenuItem>))}
                 </Select>
               </FormControl>
             </Box>

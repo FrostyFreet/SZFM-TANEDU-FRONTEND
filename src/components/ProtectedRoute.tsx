@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { Navigate } from "react-router";
 import { RoleContext } from "../App";
+import Layout from "../Layout";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,5 +15,5 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/" replace />;
   }
 
-  return <>{children}</>;
+   return <Layout>{children}</Layout>;
 }

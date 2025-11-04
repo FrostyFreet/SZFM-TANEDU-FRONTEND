@@ -25,15 +25,14 @@ import {
   TextField,
   IconButton,
   Tooltip,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { RoleContext } from "./App";
-import { courseAPI, userAPI } from "./API/ApiCalls";
-import AppBarNav from './components/AppBarNav';
+import { courseAPI, userAPI, gradeAPI } from "./API/ApiCalls";
 import type { Grade } from "./types/Grade";
 import { useQuery } from "@tanstack/react-query";
-import { gradeAPI } from "./API/ApiCalls";
+import { motion } from "framer-motion";
 
 export default function Grades() {
   const [jegyek, setJegyek] = useState<Grade[]>([]);
@@ -45,20 +44,22 @@ export default function Grades() {
   const [newGrade, setNewGrade] = useState({
     studentEmail: "",
     value: "",
-    comment: ""
+    comment: "",
   });
 
-  // Fetch subjects
   const { data: fetchedSubjects } = useQuery({
     queryKey: ["subject", token],
     queryFn: async () => {
       const response = await courseAPI.getAllAvailableSubjects();
-      return Array.isArray(response.data) ? response.data.map((d: any) => d.name || d) : [];
+      return Array.isArray(response.data)
+        ? response.data.map((d: any) => d.name || d)
+        : [];
     },
-    enabled: !!token && (roleContext?.role === "SYSADMIN" || roleContext?.role === "TEACHER"),
+    enabled:
+      !!token &&
+      (roleContext?.role === "SYSADMIN" || roleContext?.role === "TEACHER"),
   });
 
-  // Fetch grades
   const { data: fetchedGrades, isLoading, refetch } = useQuery({
     queryKey: ["grades", token, selectedUser],
     queryFn: async () => {
@@ -73,7 +74,6 @@ export default function Grades() {
     enabled: !!token && (roleContext?.role === "SYSADMIN" ? !!selectedUser : true),
   });
 
-  // Fetch students for SYSADMIN
   const { data: fetchedStudents = [] } = useQuery({
     queryKey: ["students", token],
     queryFn: async () => {
@@ -84,19 +84,19 @@ export default function Grades() {
   });
 
   useEffect(() => {
-  if (fetchedGrades) {
-    setJegyek(
-      fetchedGrades.map((item: any) => ({
-        id: item.id,
-        comment: item.comment || "Ismeretlen",
-        createdAt: item.createdAt ? new Date(item.createdAt) : null,
-        studentName: item.studentName || "Nincs adat",
-        teacherName: item.teacherName || "Nincs adat",
-        value: item.value || 0,
-      }))
-    );
-  }
-}, [fetchedGrades]);
+    if (fetchedGrades) {
+      setJegyek(
+        fetchedGrades.map((item: any) => ({
+          id: item.id,
+          comment: item.comment || "Ismeretlen",
+          createdAt: item.createdAt ? new Date(item.createdAt) : null,
+          studentName: item.studentName || "Nincs adat",
+          teacherName: item.teacherName || "Nincs adat",
+          value: item.value || 0,
+        }))
+      );
+    }
+  }, [fetchedGrades]);
 
   useEffect(() => {
     if (fetchedStudents.length > 0) {
@@ -104,17 +104,16 @@ export default function Grades() {
     }
   }, [fetchedStudents]);
 
-  // Handle grade deletion
   const handleDeleteGrade = async (gradeId: number) => {
     if (!window.confirm("Biztosan törölni szeretnéd ezt a jegyet?")) return;
 
     try {
       await gradeAPI.deleteGradeById(gradeId);
       alert("Jegy sikeresen törölve!");
-      refetch(); // Refetch grades after deletion
+      refetch();
     } catch (error) {
-      console.error("Hiba történt a jegy törlésekor:", error);
-      alert("Hiba történt a jegy törlésekor!");
+      console.error("Hiba történt:", error);
+      alert("Hiba történt a törléskor!");
     }
   };
 
@@ -126,24 +125,32 @@ export default function Grades() {
       : "Nincs adat";
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
-      <AppBarNav />
+    <Box
+      sx={{
+        bgcolor: "background.default",
+        minHeight: "100vh",
+        display: "flex",
+      }}
+    >
 
-      <Container maxWidth="lg" sx={{ pb: 6 }}>
-        <Box sx={{ mb: 4 }}>
+      <Container maxWidth="lg" sx={{ py: 6 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
           <Typography
             variant="h4"
             gutterBottom
             sx={{
               fontWeight: 700,
-              color: 'primary.main',
+              color: "primary.main",
               mb: 3,
+              textAlign: "center",
             }}
           >
-            Jegyek, értékelések
+            Jegyek és értékelések
           </Typography>
 
-          {/* SYSADMIN: Select User */}
           {roleContext?.role === "SYSADMIN" && (
             <FormControl fullWidth sx={{ mb: 3 }}>
               <InputLabel>Felhasználó kiválasztása</InputLabel>
@@ -161,7 +168,6 @@ export default function Grades() {
             </FormControl>
           )}
 
-          {/* Teacher or SYSADMIN: Add Grade */}
           {(roleContext?.role === "TEACHER" || roleContext?.role === "SYSADMIN") && (
             <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
               <Button
@@ -174,7 +180,6 @@ export default function Grades() {
             </Box>
           )}
 
-          {/* Create Grade Modal */}
           <Dialog
             open={showCreateGradeModal}
             onClose={() => setShowCreateGradeModal(false)}
@@ -182,7 +187,9 @@ export default function Grades() {
             maxWidth="sm"
           >
             <DialogTitle>Új jegy létrehozása</DialogTitle>
-            <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <DialogContent
+              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+            >
               <FormControl fullWidth>
                 <InputLabel>Diák (email)</InputLabel>
                 <Select
@@ -210,10 +217,10 @@ export default function Grades() {
               />
 
               <FormControl fullWidth>
-                <InputLabel>Tárgy</InputLabel>
+                <InputLabel>Tantárgy</InputLabel>
                 <Select
                   value={newGrade.comment}
-                  label="Tárgy"
+                  label="Tantárgy"
                   onChange={(e) =>
                     setNewGrade({ ...newGrade, comment: e.target.value })
                   }
@@ -233,7 +240,7 @@ export default function Grades() {
                 variant="contained"
                 onClick={async () => {
                   if (!newGrade.studentEmail || !newGrade.value) {
-                    alert("Kérlek töltsd ki az összes mezőt!");
+                    alert("Tölts ki minden mezőt!");
                     return;
                   }
                   try {
@@ -244,10 +251,10 @@ export default function Grades() {
                     });
                     alert("Jegy sikeresen hozzáadva!");
                     setShowCreateGradeModal(false);
-                    refetch(); // Refetch grades after creation
+                    refetch();
                   } catch (error) {
                     console.error(error);
-                    alert("Hiba történt a jegy mentésekor!");
+                    alert("Hiba történt!");
                   }
                 }}
               >
@@ -256,23 +263,42 @@ export default function Grades() {
             </DialogActions>
           </Dialog>
 
-          {/* Grades Table */}
           {isLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
               <CircularProgress />
             </Box>
           ) : (
-            <>
-              <TableContainer component={Paper} sx={{ borderRadius: '12px', overflow: 'hidden' }}>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <TableContainer
+                component={Paper}
+                sx={{
+                  borderRadius: "16px",
+                  overflow: "hidden",
+                  backdropFilter: "blur(12px)",
+                  background: "rgba(255,255,255,0.05)",
+                }}
+              >
                 <Table>
-                  <TableHead sx={{ backgroundColor: 'primary.main' }}>
+                  <TableHead sx={{ backgroundColor: "primary.main" }}>
                     <TableRow>
-                      <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Tantárgy</TableCell>
-                      <TableCell sx={{ color: '#fff', fontWeight: 700 }} align="center">Jegy</TableCell>
-                      <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Dátum</TableCell>
-                      <TableCell sx={{ color: '#fff', fontWeight: 700 }}>Tanár</TableCell>
-                      {(roleContext?.role === "TEACHER" || roleContext?.role === "SYSADMIN") && (
-                        <TableCell sx={{ color: '#fff', fontWeight: 700 }} align="center">
+                      <TableCell sx={{ color: "#fff", fontWeight: 700 }}>
+                        Tantárgy
+                      </TableCell>
+                      <TableCell sx={{ color: "#fff", fontWeight: 700 }} align="center">
+                        Jegy
+                      </TableCell>
+                      <TableCell sx={{ color: "#fff", fontWeight: 700 }}>Dátum</TableCell>
+                      <TableCell sx={{ color: "#fff", fontWeight: 700 }}>Tanár</TableCell>
+                      {(roleContext?.role === "TEACHER" ||
+                        roleContext?.role === "SYSADMIN") && (
+                        <TableCell
+                          sx={{ color: "#fff", fontWeight: 700 }}
+                          align="center"
+                        >
                           Műveletek
                         </TableCell>
                       )}
@@ -292,29 +318,36 @@ export default function Grades() {
                         <TableRow
                           key={index}
                           sx={{
-                            '&:hover': {
-                              backgroundColor: '#e3f2fd',
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                              backgroundColor: "rgba(255,255,255,0.08)",
                             },
                           }}
                         >
-                          <TableCell sx={{ fontWeight: 500 }}>{j.value}</TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>{j.comment}</TableCell>
                           <TableCell align="center">
                             <Typography
                               sx={{
                                 fontWeight: 700,
                                 color:
                                   j.value >= 4
-                                    ? 'success.main'
+                                    ? "success.main"
                                     : j.value >= 3
-                                    ? 'warning.main'
-                                    : 'error.main',
+                                    ? "warning.main"
+                                    : "error.main",
                               }}
                             >
                               {j.value}
                             </Typography>
                           </TableCell>
-                          <TableCell>{j?.createdAt ? j.createdAt.toLocaleDateString('hu-HU') : '-'}</TableCell>                          <TableCell>{j.comment}</TableCell>
-                          {(roleContext?.role === "TEACHER" || roleContext?.role === "SYSADMIN") && (
+                          <TableCell>
+                            {j?.createdAt
+                              ? j.createdAt.toLocaleDateString("hu-HU")
+                              : "-"}
+                          </TableCell>
+                          <TableCell>{j.teacherName}</TableCell>
+                          {(roleContext?.role === "TEACHER" ||
+                            roleContext?.role === "SYSADMIN") && (
                             <TableCell align="center">
                               <Tooltip title="Törlés">
                                 <IconButton
@@ -334,23 +367,33 @@ export default function Grades() {
               </TableContainer>
 
               {jegyek.length > 0 && (
-                <Card sx={{ mt: 3, backgroundColor: 'primary.light' }}>
+                <Card
+                  sx={{
+                    mt: 3,
+                    borderRadius: "16px",
+                    backdropFilter: "blur(10px)",
+                    background: "rgba(255,255,255,0.07)",
+                  }}
+                >
                   <CardContent>
-                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }}>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 700, color: "primary.main" }}
+                    >
                       Átlag: {atlag}
                     </Typography>
                   </CardContent>
                 </Card>
               )}
-            </>
+            </motion.div>
           )}
-        </Box>
 
-        <Box sx={{ textAlign: 'center', mt: 6, color: 'text.secondary' }}>
-          <Typography variant="body2">
-            © 2025 TanEdu | Hallgatói rendszer
-          </Typography>
-        </Box>
+          <Box sx={{ textAlign: "center", mt: 6, color: "text.secondary" }}>
+            <Typography variant="body2">
+              © 2025 TanEdu | Hallgatói rendszer
+            </Typography>
+          </Box>
+        </motion.div>
       </Container>
     </Box>
   );
