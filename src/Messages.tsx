@@ -14,10 +14,39 @@ import {
   Chip,
   CircularProgress,
   Autocomplete,
+  Link,
 } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { userAPI, messageAPI } from "./API/ApiCalls";
 import type { Conversation, Message } from "./types/Messages";
+
+const renderMessageWithLinks = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+
+    return parts.map((part, idx) => {
+      if (urlRegex.test(part)) {
+        return (
+          <Link
+            key={idx}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              color: "inherit",
+              textDecoration: "underline",
+              fontWeight: 600,
+              wordBreak: "break-all",
+              "&:hover": { opacity: 0.8 },
+            }}
+          >
+            {part}
+          </Link>
+        );
+      }
+      return <span key={idx}>{part}</span>;
+    });
+  };
 
 export default function Messages() {
   const [showNewMsgModal, setShowNewMsgModal] = useState(false);
@@ -325,8 +354,8 @@ export default function Messages() {
                                 borderRadius: "12px",
                               }}
                             >
-                              <Typography sx={{ fontSize: "0.9rem" }}>
-                                {msg.message}
+                              <Typography sx={{ fontSize: "0.9rem", wordWrap: "break-word" }}>
+                                {renderMessageWithLinks(msg.message)}
                               </Typography>
                               <Typography
                                 sx={{
