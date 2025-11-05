@@ -37,6 +37,15 @@ import { courseAPI, departmentAPI, userAPI } from "./API/ApiCalls";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 
+const itemLabel = (v: any) => {
+    if (!v && v !== 0) return "";
+    if (typeof v === "string") return v;
+    if (typeof v === "number") return String(v);
+    if (v?.name) return String(v.name);
+    if (v?.email) return String(v.email);
+    if (v?.id) return String(v.id);
+    try { return JSON.stringify(v); } catch { return String(v); }
+  };
 
 export default function Schedule() {
   const roleContext = useContext(RoleContext);
@@ -62,29 +71,32 @@ export default function Schedule() {
     departmentName: ""
   });
 
-  const { data: fetchedDepartments = [] } = useQuery({
+   const { data: fetchedDepartments = [] } = useQuery({
     queryKey: ["departments", token],
     queryFn: async () => {
       const response = await departmentAPI.getAll();
-      return Array.isArray(response.data) ? response.data.map((d: any) => d.name || d) : [];
+      if (!Array.isArray(response.data)) return [];
+      return response.data.map((d: any) => itemLabel(d));
     },
     enabled: !!token && roleContext?.role === "SYSADMIN",
   });
   
-  const {data:fetchedSubjects} = useQuery({
+  const { data: fetchedSubjects = [] } = useQuery({
     queryKey: ["subject", token],
     queryFn: async () => {
       const response = await courseAPI.getAllAvailableSubjects();
-      return Array.isArray(response.data) ? response.data.map((d: any) => d.name || d) : [];
+      if (!Array.isArray(response.data)) return [];
+      return response.data.map((d: any) => itemLabel(d));
     },
     enabled: !!token && roleContext?.role === "SYSADMIN",
-  })
+  });
 
   const { data: fetchedTeachers = [] } = useQuery({
     queryKey: ["teachers", token],
     queryFn: async () => {
       const response = await userAPI.getAllTeachersEmail();
-      return Array.isArray(response.data) ? response.data : [];
+      if (!Array.isArray(response.data)) return [];
+      return response.data.map((t: any) => itemLabel(t));
     },
     enabled: !!token,
   });

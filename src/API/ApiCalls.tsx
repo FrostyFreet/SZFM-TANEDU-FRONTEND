@@ -199,6 +199,27 @@ export const departmentAPI = {
     }),
 };
 
+export const attendanceAPI = {
+  saveAttendance:(payload:any)=>
+     axios.post(`${API_BASE_URL}/attendance`,payload, {
+        headers: getAuthHeaders(),
+    }),
+  getMyAttendances: ()=>
+     axios.get(`${API_BASE_URL}/attendance/my-attendances`, {
+        headers: getAuthHeaders(),
+    }),
+ getAttendance: (courseId: number, date: string, timeSlot?: string) =>
+    axios.get(`${API_BASE_URL}/attendance/${courseId}`, {
+      params: { date, ...(timeSlot ? { timeSlot } : {}) },
+      headers: getAuthHeaders(),
+    }),
+  
+  deleteAttendance: (attendanceId: number) =>
+    axios.delete(`${API_BASE_URL}/attendance/${attendanceId}`, {
+      headers: getAuthHeaders(),
+    }),
+}
+
 export const uploadImage = async (file: File) => {
   const formData = new FormData();
   formData.append('file', file);
