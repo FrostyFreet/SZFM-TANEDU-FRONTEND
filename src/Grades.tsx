@@ -25,6 +25,7 @@ import {
   TextField,
   IconButton,
   Tooltip,
+  Autocomplete
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -145,22 +146,29 @@ export default function Grades() {
 
           {/* SYSADMIN: Select User */}
           {roleContext?.role === "SYSADMIN" && (
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Felhasználó kiválasztása</InputLabel>
-              <Select
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
-                label="Felhasználó kiválasztása"
-              >
-                {studentsList.map((student) => (
-                  <MenuItem key={student} value={student}>
-                    {student}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: 'primary.main' }}>
+                👥 Felhasználó kiválasztása
+              </Typography>
+              <Autocomplete
+                options={studentsList}
+                value={selectedUser || ""}
+                onChange={(event, newValue) => setSelectedUser(newValue || "")}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Felhasználó kiválasztása"
+                    fullWidth
+                  />
+                )}
+                filterOptions={(options, state) =>
+                  options.filter((option) =>
+                    option.toLowerCase().includes(state.inputValue.toLowerCase())
+                  )
+                }
+              />
+            </Box>
           )}
-
           {/* Teacher or SYSADMIN: Add Grade */}
           {(roleContext?.role === "TEACHER" || roleContext?.role === "SYSADMIN") && (
             <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>

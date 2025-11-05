@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import MenuItem from '@mui/material/MenuItem';
 import Autocomplete from "@mui/material/Autocomplete";
+import AddIcon from '@mui/icons-material/Add';
 import {
   Box,
   Typography,
@@ -19,6 +20,7 @@ import {
   TextField,
   Alert,
   Container,
+  
 } from '@mui/material';
 import AppBarNav from './components/AppBarNav';
 import { userAPI, authAPI } from "./API/ApiCalls";
@@ -148,10 +150,11 @@ export default function Adatok() {
                 <Button
                   variant="contained"
                   color="primary"
+                  startIcon={<AddIcon/>}
                   onClick={() => setShowCreateUser(true)}
                   sx={{ ml: 2 }}
                 >
-                  ➕ Új felhasználó
+                  Új felhasználó
                 </Button>
               )}
             </Box>
@@ -198,8 +201,7 @@ export default function Adatok() {
         <Autocomplete
           options={allUsers.map((u) => u.email)}
           value={selectedEmail}
-          onChange={(event, newValue) => {
-            setSelectedEmail(newValue || "");
+          onChange={(event, newValue) => {setSelectedEmail(newValue || "");
             const user = allUsers.find((u) => u.email === newValue);
             setSelectedUser(user || null);
           }}

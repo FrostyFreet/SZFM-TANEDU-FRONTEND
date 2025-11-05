@@ -43,6 +43,7 @@ export default function Schedule() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>("");
   const [departments, setDepartments] = useState<string[]>([]);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+  const [showCreateDepartmentModal, setShowCreateDepartmentModal] = useState(false);
   const [teachersList, setTeachersList] = useState<string[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedMenuCourse, setSelectedMenuCourse] = useState<CourseApi | null>(null);
@@ -53,6 +54,12 @@ export default function Schedule() {
     duration: "08:00-8:45",
     teacherName: "",
     departmentName: ""
+  });
+
+  const [newDepartment, setNewDepartment] = useState({
+  name: "",
+  grade: "",
+  headTeacher: "",
   });
 
   const { data: fetchedDepartments = [] } = useQuery({
@@ -274,33 +281,58 @@ export default function Schedule() {
           </Typography>
 
           {roleContext?.role === "SYSADMIN" && (
-            <Box sx={{ mb: 4, display: 'flex', gap: 2, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-              <FormControl sx={{ minWidth: 250 }}>
-                <InputLabel>Osztály</InputLabel>
-                <Select
-                  value={selectedDepartment}
-                  label="Osztály"
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
-                >
-                  {departments.map((dept) => (
-                    <MenuItem key={dept} value={dept}>
-                      {dept}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+  <Box
+  sx={{
+    mb: 4,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    flexWrap: 'wrap',
+    gap: 2,
+  }}
+>
+  {/* Bal oldalt: osztályválasztó */}
+  <FormControl sx={{ minWidth: 250 }}>
+    <InputLabel>Osztály</InputLabel>
+    <Select
+      value={selectedDepartment}
+      label="Osztály"
+      onChange={(e) => setSelectedDepartment(e.target.value)}
+    >
+      {departments.map((dept) => (
+        <MenuItem key={dept} value={dept}>
+          {dept}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
 
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<AddIcon />}
-                onClick={() => setShowCreateCourseModal(true)}
-                size="large"
-              >
-                Új órarend
-              </Button>
-            </Box>
+  {/* Jobb oldalt: két gomb egymás mellett */}
+  <Box sx={{ display: 'flex', gap: 2 }}>
+    <Button
+      variant="contained"
+      color="primary"
+      startIcon={<AddIcon />}
+      onClick={() => setShowCreateDepartmentModal(true)}
+      size="large"
+    >
+      Új osztály
+    </Button>
+
+    <Button
+      variant="contained"
+      color="success"
+      startIcon={<AddIcon />}
+      onClick={() => setShowCreateCourseModal(true)}
+      size="large"
+    >
+      Új órarend
+    </Button>
+  </Box>
+</Box>
           )}
+        
+
 
           <TableContainer component={Paper} sx={{ borderRadius: '12px', overflow: 'hidden' }}>
             <Table>
@@ -506,6 +538,77 @@ export default function Schedule() {
             </Button>
           </DialogActions>
         </Dialog>
+                  {/* Create Department Modal */}
+<Dialog
+  open={showCreateDepartmentModal}
+  onClose={() => setShowCreateDepartmentModal(false)}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogTitle sx={{ fontWeight: 700, color: 'primary.main' }}>
+    🏫 Új osztály létrehozása
+  </DialogTitle>
+  <DialogContent sx={{ pt: 2 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <TextField
+        label="Osztály neve"
+        value={newDepartment.name}
+        onChange={(e) => setNewDepartment({ ...newDepartment, name: e.target.value })}
+        fullWidth
+        required
+      />
+      <TextField
+        label="Évfolyam"
+        value={newDepartment.grade}
+        onChange={(e) => setNewDepartment({ ...newDepartment, grade: e.target.value })}
+        fullWidth
+        required
+      />
+      <FormControl fullWidth required>
+        <InputLabel>Osztályfőnök</InputLabel>
+        <Select
+          value={newDepartment.headTeacher}
+          label="Osztályfőnök"
+          onChange={(e) => setNewDepartment({ ...newDepartment, headTeacher: e.target.value })}
+        >
+          {teachersList.map((teacher) => (
+            <MenuItem key={teacher} value={teacher}>
+              {teacher}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </Box>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setShowCreateDepartmentModal(false)}>Mégse</Button>
+    <Button
+      onClick={async () => {
+        if (!newDepartment.name || !newDepartment.grade || !newDepartment.headTeacher) {
+          alert("Kérlek töltsd ki az összes mezőt!");
+          return;
+        }
+        try {
+          await departmentAPI.create({
+            name: newDepartment.name,
+            grade: newDepartment.grade,
+            headTeacher: newDepartment.headTeacher,
+          });
+          alert("Az osztály sikeresen létrehozva!");
+          setShowCreateDepartmentModal(false);
+          window.location.reload();
+        } catch (error) {
+          console.error("Failed to create department:", error);
+          alert("Hiba történt az osztály létrehozásakor!");
+        }
+      }}
+      variant="contained"
+      color="primary"
+    >
+      Létrehozás
+    </Button>
+  </DialogActions>
+</Dialog>
 
         <Box sx={{ textAlign: 'center', mt: 6, color: 'text.secondary' }}>
           <Typography variant="body2">

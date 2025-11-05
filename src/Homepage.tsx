@@ -9,15 +9,15 @@ export default function Homepage() {
     { icon: '📅', label: 'Órarend', path: '/orarend' },
     { icon: '📊', label: 'Jegyek, értékelések', path: '/jegyek' },
     { icon: '📩', label: 'Üzenetek', path: '/uzenetek' },
-    { icon: '👤', label: 'Adatok', path: '/adatok' },
-    { icon: "✅", label: "Jelenlét", path: "/jelenlét" }
+    { icon: "✅", label: "Jelenlét", path: "/jelenlét" },
+    { icon: '👤', label: 'Adatok', path: '/adatok' }
   ];
 
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
       <AppBarNav />
       
-      <Container maxWidth="lg" sx={{ pb: 6 }}>
+      <Container maxWidth="lg" sx={{ pb: 6}}>
         <Box sx={{ textAlign: 'center', mb: 6 }}>
           <Typography
             variant="h3"
@@ -37,7 +37,7 @@ export default function Homepage() {
 
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {menuItems.map((item) => (
-            <Grid key={item.path} size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid key={item.path} size={{ xs: 12, sm: 6, md: 2.4 }}>
               <Card
                 sx={{
                   height: '100%',

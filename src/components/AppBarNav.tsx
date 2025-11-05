@@ -39,8 +39,9 @@ export default function AppBarNav() {
     { icon: "📅", label: "Órarend", path: "/orarend" },
     { icon: "📊", label: "Jegyek", path: "/jegyek" },
     { icon: "📩", label: "Üzenetek", path: "/uzenetek" },
-    { icon: "👤", label: "Adatok", path: "/adatok" },
-    { icon: "✅", label: "Jelenlét", path: "/jelenlét" }
+    { icon: "✅", label: "Jelenlét", path: "/jelenlét" },
+    { icon: "👤", label: "Adatok", path: "/adatok" }
+    
   ];
 
   return (

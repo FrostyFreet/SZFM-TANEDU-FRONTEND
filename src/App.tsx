@@ -137,14 +137,6 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/adatok" 
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } 
-              />
               <Route
               path="/jelenlét"
               element={
@@ -152,6 +144,14 @@ function App() {
                   <Attendance/>
                 </ProtectedRoute>
               }
+              />
+              <Route 
+                path="/adatok" 
+                element={
+                  <ProtectedRoute>
+                    <Profile/>
+                  </ProtectedRoute>
+                } 
               />
             </>
           ) : (
