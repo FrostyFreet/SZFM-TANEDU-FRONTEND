@@ -40,6 +40,10 @@ export const userAPI = {
     axios.get(`${API_BASE_URL}/users/getCurrentUser`, {
       headers: getAuthHeaders(),
     }),
+  getStudentsByDepartmentName: (departmentName:string) =>
+    axios.get(`${API_BASE_URL}/users/getAllStudentsByDepartment/${departmentName}`, {
+      headers: getAuthHeaders(),
+  }),
 
   getCurrentUserRole: () =>
     axios.get(`${API_BASE_URL}/users/getCurrentUserRole`, {

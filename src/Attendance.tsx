@@ -90,9 +90,7 @@ export default function Attendance() {
     enabled: !!token && role === "CLASSLEADER",
     retry: false,
   });
-  console.log(currentUser);
   
-
   useEffect(() => {
     if (role === "CLASSLEADER" && currentUser) {
       const depName = currentUser.classLeaderOf;
