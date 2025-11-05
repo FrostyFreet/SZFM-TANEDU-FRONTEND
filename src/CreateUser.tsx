@@ -50,7 +50,7 @@ export default function CreateUser() {
     lastName: "",
     password: "",
     role: "STUDENT",
-    birth_date:"",
+    birth_date: "",
     subject: "",
     departmentId: "" as number | "",
     classLeaderOfId: "" as number | "",
@@ -60,13 +60,13 @@ export default function CreateUser() {
 
   const roles = ["STUDENT", "TEACHER", "SYSADMIN", "CLASSLEADER"];
 
- const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
- const validate = () => {
+  const validate = () => {
     if (!form.email || !form.firstName || !form.lastName || !form.password || !form.role) {
       setMessage({ type: "error", text: "Tölts ki minden kötelező mezőt!" });
       return false;
-   }
+    }
 
     if (!emailRegex.test(form.email)) {
       setMessage({ type: "error", text: "Érvénytelen e-mail cím." });
@@ -80,8 +80,8 @@ export default function CreateUser() {
 
     const birth = new Date(form.birth_date);
     const today = new Date();
-    today.setHours(0,0,0,0);
-    birth.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
+    birth.setHours(0, 0, 0, 0);
     if (birth > today) {
       setMessage({ type: "error", text: "A születési dátum nem lehet a jövőben." });
       return false;
@@ -91,11 +91,17 @@ export default function CreateUser() {
       setMessage({ type: "error", text: "Tanár szerephez add meg a tantárgyat!" });
       return false;
     }
+
+    if ((form.role === "STUDENT" || form.role === "TEACHER") && !form.departmentId) {
+      setMessage({ type: "error", text: "Diák/Tanár szerephez válassz egy osztályt/csoportot!" });
+      return false;
+    }
+
     if (form.role === "CLASSLEADER" && !form.classLeaderOfId) {
       setMessage({ type: "error", text: "Osztályfőnök szerephez válassz egy osztályt!" });
       return false;
     }
-   return true;
+    return true;
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -107,7 +113,7 @@ export default function CreateUser() {
       email: form.email,
       firstName: form.firstName,
       lastName: form.lastName,
-      birthDate:form.birth_date,
+      birthDate: form.birth_date,
       password: form.password,
       role: form.role,
     };
@@ -128,7 +134,7 @@ export default function CreateUser() {
           lastName: "",
           password: "",
           role: "STUDENT",
-          birth_date:"",
+          birth_date: "",
           subject: "",
           departmentId: "",
           classLeaderOfId: "",
@@ -187,7 +193,7 @@ export default function CreateUser() {
                 fullWidth
                 required
               />
-               <TextField
+              <TextField
                 label="Születési idő"
                 type="date"
                 value={form.birth_date}
@@ -195,9 +201,9 @@ export default function CreateUser() {
                 fullWidth
                 required
                 slotProps={{
-                  inputLabel:{
-                    shrink:true
-                  }
+                  inputLabel: {
+                    shrink: true,
+                  },
                 }}
               />
 
@@ -221,35 +227,38 @@ export default function CreateUser() {
                   <InputLabel>Tantárgy</InputLabel>
                   <Select
                     value={form.subject}
-                    label="Tantárgy (pl. Matematika)"
+                    label="Tantárgy"
                     onChange={(e) => setForm({ ...form, subject: e.target.value as any })}
                   >
-                    {fetchedSubjects && fetchedSubjects.map((subject: any) => (
-                      <MenuItem key={subject} value={subject}>
-                        {subject}
+                    {fetchedSubjects &&
+                      fetchedSubjects.map((subject: any) => (
+                        <MenuItem key={subject} value={subject}>
+                          {subject}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              {(form.role === "STUDENT" || form.role === "TEACHER") && (
+                <FormControl fullWidth required>
+                  <InputLabel>Osztály / Csoport</InputLabel>
+                  <Select
+                    value={form.departmentId}
+                    label="Osztály / Csoport"
+                    onChange={(e) => setForm({ ...form, departmentId: e.target.value as any })}
+                  >
+                    <MenuItem value="">
+                      <em>Válassz</em>
+                    </MenuItem>
+                    {departments.map((d: any) => (
+                      <MenuItem key={d.id} value={d.id}>
+                        {d.name}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
               )}
-
-              <FormControl fullWidth>
-                <InputLabel>Osztály / Csoport</InputLabel>
-                <Select
-                  value={form.departmentId}
-                  label="Osztály / Csoport"
-                  onChange={(e) => setForm({ ...form, departmentId: e.target.value as any })}
-                >
-                  <MenuItem value="">
-                    <em>Nincs</em>
-                  </MenuItem>
-                  {departments.map((d: any) => (
-                    <MenuItem key={d.id} value={d.id}>
-                      {d.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
 
               {form.role === "CLASSLEADER" && (
                 <FormControl fullWidth required>
@@ -285,7 +294,7 @@ export default function CreateUser() {
                       password: "",
                       role: "STUDENT",
                       subject: "",
-                      birth_date:"",
+                      birth_date: "",
                       departmentId: "",
                       classLeaderOfId: "",
                     })
