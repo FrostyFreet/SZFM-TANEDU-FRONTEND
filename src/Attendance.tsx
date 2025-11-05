@@ -26,7 +26,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { attendanceAPI, departmentAPI, courseAPI } from "./API/ApiCalls";
+import { attendanceAPI, departmentAPI, courseAPI, userAPI } from "./API/ApiCalls";
 import { RoleContext } from "./App";
 
 type AttendanceItem = {
@@ -53,8 +53,7 @@ export default function Attendance() {
     severity: "info",
     message: "",
   });
-  const showSnackbar = (message: string, severity: any = "info") =>
-    setSnackbar({ open: true, severity, message });
+  const showSnackbar = (message: string, severity: any = "info") => setSnackbar({ open: true, severity, message });
 
   const { data: myAttendances, isLoading: myAttendancesLoading } = useQuery({
     queryKey: ["myAttendances", token],
@@ -81,6 +80,27 @@ export default function Attendance() {
     },
     enabled: !!token,
   });
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["currentUser", token],
+    queryFn: async () => {
+      const res = await userAPI.getCurrentUser();
+      return res?.data;
+    },
+    enabled: !!token && role === "CLASSLEADER",
+    retry: false,
+  });
+  console.log(currentUser);
+  
+
+  useEffect(() => {
+    if (role === "CLASSLEADER" && currentUser) {
+      const depName = currentUser.classLeaderOf;
+      if (depName) {
+        setSelectedDepartment(depName);
+      }
+    }
+  }, [role, currentUser]);
 
   const { data: coursesByDepartment } = useQuery({
     queryKey: ["coursesByDepartment", token, selectedDepartment],
@@ -112,17 +132,13 @@ export default function Attendance() {
   });
 
   const { data: attendancesForCourseDate } = useQuery({
-  queryKey: ["attendanceByCourseDate", token, selectedCourse, date, selectedDuration],
-  queryFn: async () => {
-    if (!selectedCourse) return [];
-    const response = await attendanceAPI.getAttendance(
-      selectedCourse as number,
-      date,
-      (selectedDuration as string) || undefined
-    );
-    return Array.isArray(response.data) ? response.data : [];
-  },
-  enabled: !!token && !!selectedCourse,
+    queryKey: ["attendanceByCourseDate", token, selectedCourse, date, selectedDuration],
+    queryFn: async () => {
+      if (!selectedCourse) return [];
+      const response = await attendanceAPI.getAttendance(selectedCourse as number, date, (selectedDuration as string) || undefined);
+      return Array.isArray(response.data) ? response.data : [];
+    },
+    enabled: !!token && !!selectedCourse,
   });
 
   useEffect(() => {
@@ -130,7 +146,6 @@ export default function Attendance() {
       setStudents([]);
       return;
     }
-    // map attendances by student id
     const attMap = new Map<number, AttendanceItem>();
     (attendancesForCourseDate || []).forEach((a: any) => {
       const studentId = a?.student?.id ?? (a?.studentId ?? null);
@@ -170,7 +185,6 @@ export default function Attendance() {
     setStudents((prev) => prev.map((s) => (s.id === studentId ? { ...s, present: !s.present } : s)));
   };
 
-  // create / update attendance mutation
   const createMutation = useMutation({
     mutationFn: async (payload: any) => attendanceAPI.saveAttendance(payload),
     onSuccess: () => {
@@ -178,7 +192,7 @@ export default function Attendance() {
       queryClient.invalidateQueries({ queryKey: ["myAttendances"] });
       queryClient.invalidateQueries({ queryKey: ["attendanceByCourseDate", token, selectedCourse, date, selectedDuration] });
       queryClient.invalidateQueries({ queryKey: ["studentsForCourse", token, selectedCourse] });
-  },
+    },
     onError: (err: any) => {
       if (err?.response?.status === 403) {
         showSnackbar("Nincs jogosultságod ehhez a művelethez.", "error");
@@ -189,7 +203,6 @@ export default function Attendance() {
     },
   });
 
-  // delete attendance mutation (teacher/sysadmin)
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => attendanceAPI.deleteAttendance(id),
     onSuccess: () => {
@@ -197,7 +210,7 @@ export default function Attendance() {
       queryClient.invalidateQueries({ queryKey: ["myAttendances"] });
       queryClient.invalidateQueries({ queryKey: ["attendanceByCourseDate", token, selectedCourse, date, selectedDuration] });
       queryClient.invalidateQueries({ queryKey: ["studentsForCourse", token, selectedCourse] });
-  },
+    },
     onError: (err: any) => {
       if (err?.response?.status === 403) {
         showSnackbar("Nincs jogosultságod ehhez a művelethez.", "error");
@@ -220,7 +233,7 @@ export default function Attendance() {
       students: [{ studentId, present: newPresent }],
     };
     createMutation.mutate(payload);
-};
+  };
 
   const handleSaveAttendance = () => {
     if (!selectedCourse) {
@@ -238,9 +251,8 @@ export default function Attendance() {
       timeSlot: selectedDuration || undefined,
       students: students.map((s) => ({ studentId: s.id, present: s.present })),
     };
-
-  createMutation.mutate(payload);
-};
+    createMutation.mutate(payload);
+  };
 
   const handleDeleteById = () => {
     const idNum = Number(deleteId);
@@ -251,13 +263,10 @@ export default function Attendance() {
     deleteMutation.mutate(idNum);
   };
 
-  // Authorization checks
   if (!token) {
     return <Typography color="error">Hiba: Hiányzó jogosultság.</Typography>;
   }
 
-  console.log(myAttendances);
-  
   if (role === "STUDENT") {
     return (
       <Box sx={{ bgcolor: "background.default", minHeight: "100vh", py: 6 }}>
@@ -311,12 +320,7 @@ export default function Attendance() {
           </Paper>
         </Container>
 
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        >
+        <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
           <Alert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity as any} sx={{ width: "100%" }}>
             {snackbar.message}
           </Alert>
@@ -325,11 +329,16 @@ export default function Attendance() {
     );
   }
 
-  if (role !== "TEACHER" && role !== "SYSADMIN") {
+  // allow CLASSLEADER in addition to TEACHER and SYSADMIN
+  if (role !== "TEACHER" && role !== "SYSADMIN" && role !== "CLASSLEADER") {
     return <Typography color="error">Nincs jogosultságod az oldal megtekintéséhez.</Typography>;
   }
 
   const chosenCourse = (coursesByDepartment || []).find((c: any) => c.id === selectedCourse);
+
+   const visibleDepartments = role === "CLASSLEADER" && currentUser
+    ? (departmentList || []).filter((d: any) => d.name === currentUser.classLeaderOf)
+    : departmentList;
 
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh", py: 6 }}>
@@ -341,9 +350,21 @@ export default function Attendance() {
         <Paper sx={{ p: 3, mb: 3 }}>
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel>Osztály</InputLabel>
-            <Select value={selectedDepartment} label="Osztály" onChange={(e) => { setSelectedDepartment(e.target.value as string); setSelectedCourse(""); setSelectedDuration(""); setStudents([]); }}>
-              <MenuItem value=""><em>Válassz</em></MenuItem>
-              {departmentList?.map((dep: any) => (
+            <Select
+              value={selectedDepartment}
+              label="Osztály"
+              onChange={(e) => {
+                setSelectedDepartment(e.target.value as string);
+                setSelectedCourse("");
+                setSelectedDuration("");
+                setStudents([]);
+              }}
+              disabled={role === "CLASSLEADER"}
+            >
+              <MenuItem value="">
+                <em>Válassz</em>
+              </MenuItem>
+              {visibleDepartments?.map((dep: any) => (
                 <MenuItem key={dep.id} value={dep.name}>
                   {dep.name}
                 </MenuItem>
@@ -360,7 +381,9 @@ export default function Attendance() {
                 setSelectedDuration(e.target.value as string);
               }}
             >
-              <MenuItem value=""><em>Válassz</em></MenuItem>
+              <MenuItem value="">
+                <em>Válassz</em>
+              </MenuItem>
               {uniqueDurations.map((d) => (
                 <MenuItem key={d} value={d}>
                   {d}
@@ -402,35 +425,20 @@ export default function Attendance() {
               </Paper>
 
               <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-                <Button
-                  variant="contained"
-                  onClick={handleSaveAttendance}
-                  disabled={createMutation.status === "pending"}
-                >
+                <Button variant="contained" onClick={handleSaveAttendance} disabled={createMutation.status === "pending"}>
                   Mentés
                 </Button>
 
-                <TextField
-                  label="Törléshez jelenlét ID"
-                  value={deleteId}
-                  onChange={(e) => setDeleteId(e.target.value)}
-                  size="small"
-                />
-                <Button
-                  variant="contained"
-                  color="error"
-                  onClick={handleDeleteById}
-                  disabled={deleteMutation.status === "pending"}
-                >
+                <TextField label="Törléshez jelenlét ID" value={deleteId} onChange={(e) => setDeleteId(e.target.value)} size="small" />
+                <Button variant="contained" color="error" onClick={handleDeleteById} disabled={deleteMutation.status === "pending"}>
                   Törlés
                 </Button>
               </Box>
 
               <Typography color="text.secondary" sx={{ mt: 2 }}>
-                Megjegyzés: a szerver csak TEACHER vagy SYSADMIN szereppel engedélyezi a törlést. A dátum automatikusan a mai nap lesz.
+                Megjegyzés: a szerver csak TEACHER, CLASSLEADER vagy SYSADMIN szereppel engedélyezi a törlést. A dátum automatikusan a mai nap lesz.
               </Typography>
 
-              {/* Existing attendances for this course/date - editable rows */}
               <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
                 Rögzített hiányzások / jelenlétek ({date})
               </Typography>
@@ -445,27 +453,19 @@ export default function Attendance() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {(attendancesForCourseDate || []).map((att: any, idx:number) => {
+                    {(attendancesForCourseDate || []).map((att: any, idx: number) => {
                       const studentObj = att.student ?? att.studentId ? { id: att.student?.id ?? att.studentId, fullName: att.student?.fullName } : null;
                       const studentId = studentObj?.id ?? (att.studentId ?? null);
                       const studentName = (studentObj?.fullName ?? `${att.student?.firstName || ""} ${att.student?.lastName || ""}`.trim()) || `#${studentId}`;
                       return (
                         <TableRow key={att.id}>
-                          <TableCell>{idx+1}</TableCell>
+                          <TableCell>{idx + 1}</TableCell>
                           <TableCell>{studentName}</TableCell>
                           <TableCell>
-                            <Checkbox
-                              checked={Boolean(att.present)}
-                              onChange={(e) => handleRowToggle(studentId, e.target.checked)}
-                              disabled={createMutation.status === "pending"}
-                            />
+                            <Checkbox checked={Boolean(att.present)} onChange={(e) => handleRowToggle(studentId, e.target.checked)} disabled={createMutation.status === "pending"} />
                           </TableCell>
                           <TableCell>
-                            <IconButton
-                              color="error"
-                              onClick={() => deleteMutation.mutate(att.id)}
-                              disabled={deleteMutation.status === "pending"}
-                            >
+                            <IconButton color="error" onClick={() => deleteMutation.mutate(att.id)} disabled={deleteMutation.status === "pending"}>
                               <DeleteIcon />
                             </IconButton>
                           </TableCell>
@@ -474,7 +474,9 @@ export default function Attendance() {
                     })}
                     {(!attendancesForCourseDate || attendancesForCourseDate.length === 0) && (
                       <TableRow>
-                        <TableCell colSpan={4} align="center">Nincs rögzített jelenlét a kiválasztott időpontra.</TableCell>
+                        <TableCell colSpan={4} align="center">
+                          Nincs rögzített jelenlét a kiválasztott időpontra.
+                        </TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -485,12 +487,7 @@ export default function Attendance() {
         </Paper>
       </Container>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
         <Alert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity as any} sx={{ width: "100%" }}>
           {snackbar.message}
         </Alert>
