@@ -77,6 +77,14 @@ export const messageAPI = {
       },
       { headers: getAuthHeaders() }
     ),
+  
+  getDepartmentMessages: (deptId: number) =>
+    axios.get(`${API_BASE_URL}/messages/departments/${deptId}/messages`, { headers: getAuthHeaders() }
+  ),
+
+  postToDepartment: (deptId: number, body: { senderId?: number; value: string }) =>
+    axios.post(`${API_BASE_URL}/messages/departments/${deptId}/messages`, body, { headers: getAuthHeaders() }
+  ),
 };
 
 // ============ GRADES API ============
@@ -201,6 +209,12 @@ export const departmentAPI = {
     axios.get(`${API_BASE_URL}/departments/getDepartmentClassLeader/${departmentName}`, {
         headers: getAuthHeaders(),
     }),
+
+  getById:(departmentId:string)=>
+    axios.get(`${API_BASE_URL}/departments/getById/${departmentId}`, {
+        headers: getAuthHeaders(),
+    }),
+
 };
 
 export const attendanceAPI = {
