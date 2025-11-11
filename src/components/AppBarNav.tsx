@@ -29,7 +29,7 @@ const navItems = [
   { text: "Jegyek", icon: <Grade />, path: "/jegyek" },
   { text: "Órarend", icon: <Schedule />, path: "/orarend" },
   { text: "Jelenlét", icon: <CheckCircle />, path: "/jelenlét" },
-  { text: "HIányzás-feltöltés", icon: <CloudUpload />, path: "/feltoltes" },
+  { text: "Hiányzás-feltöltés", icon: <CloudUpload />, path: "/feltoltes" },
   { text: "Adatok", icon: <AccountCircle />, path: "/adatok" },
   { text: "Felhasználó létrehozás", icon: <AccountCircle />, path: "/register" },
 ];

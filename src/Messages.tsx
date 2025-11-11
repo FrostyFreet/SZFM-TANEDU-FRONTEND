@@ -259,7 +259,7 @@ return (
           centered
         >
           <Tab label="💬 Személyes üzenetek" />
-          <Tab label="🏫 Department üzenetek" />
+          <Tab label="🏫 Intézményi üzenetek" />
         </Tabs>
 
         {/* --- SZEMÉLYES ÜZENETEK TARTALOM --- */}
@@ -516,7 +516,7 @@ return (
           </Box>
         )}
 
-        {/* --- DEPARTMENT ÜZENETEK TARTALOM --- */}
+        {/* --- INTÉZMÉNYI ÜZENETEK TARTALOM --- */}
         {selectedTab === 1 && (
           <Box sx={{ p: 2 }}>
             {deptsLoading ? (
@@ -546,7 +546,7 @@ return (
                 >
                   <Box sx={{ p: 2, bgcolor: "primary.main" }}>
                     <Typography sx={{ color: "#fff", fontWeight: 700 }}>
-                      🏫 Department üzenetek
+                      🏫 Intézményi Üzenetek
                     </Typography>
                   </Box>
 
@@ -602,7 +602,7 @@ return (
                       </Box>
                     ) : deptMessages.length === 0 ? (
                       <Typography color="text.secondary">
-                        Nincs üzenet ebben a departmentben
+                        Nincs üzenet ebben az intézményben
                       </Typography>
                     ) : (
                       deptMessages.map((m:any, idx:number) => {
