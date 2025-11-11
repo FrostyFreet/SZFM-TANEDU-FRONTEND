@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -25,6 +25,8 @@ import {
   TextField,
   IconButton,
   Tooltip,
+  Autocomplete, 
+  Chip
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -40,11 +42,48 @@ export default function Grades() {
   const [showCreateGradeModal, setShowCreateGradeModal] = useState(false);
   const [studentsList, setStudentsList] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>("");
+  const [modalActiveLetter, setModalActiveLetter] = useState<string | null>(null);
+  const [modalSearchInput, setModalSearchInput] = useState<string>("");
+  const [modalShowAlphabet, setModalShowAlphabet] = useState(false);
+
   const [newGrade, setNewGrade] = useState({
     studentEmail: "",
     value: "",
     subject: "",
   });
+  const [activeLetter, setActiveLetter] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState<string>("");
+  const [showSearchPanel, setShowSearchPanel] = useState(false);
+  const alphabet = ["A","Á","B","C","Cs","D","Dz","Dzs","E","É","F","G","Gy","H","I","Í","J","K","L","Ly","M","N",
+    "Ny","O","Ó","Ö","Ő","P","Q","R","S","Sz","T","Ty","U","Ú","Ü","Ű","V","W","X","Y","Z","Zs"];
+
+  const filteredStudents = useMemo(() => {
+    if (searchInput) {
+      return studentsList.filter((s) =>
+        s.toLowerCase().includes(searchInput.toLowerCase())
+      );
+    } else if (activeLetter) {
+      return studentsList.filter((s) =>
+        s.split("@")[0][0]?.toUpperCase() === activeLetter
+      );
+    }
+    return [];
+    }, 
+    [studentsList, searchInput, activeLetter]);
+  
+  const filteredStudentsForModal = useMemo(() => {
+  if (modalSearchInput) {
+    return studentsList.filter((s) =>
+      s.toLowerCase().includes(modalSearchInput.toLowerCase())
+    );
+  } else if (modalActiveLetter) {
+    return studentsList.filter((s) =>
+      s.split("@")[0][0]?.toUpperCase() === modalActiveLetter
+    );
+  }
+  return [];
+}, [studentsList, modalSearchInput, modalActiveLetter]);
+
 
   const { data: fetchedSubjects } = useQuery({
     queryKey: ["subject", token],
@@ -175,125 +214,199 @@ export default function Grades() {
           Jegyek és értékelések
         </Typography>
 
-        {(roleContext?.role === "SYSADMIN" ||
-          roleContext?.role === "CLASSLEADER") && (
-          <FormControl fullWidth sx={{ mb: 3 }}>
-            <InputLabel>Felhasználó kiválasztása</InputLabel>
-            <Select
-              value={selectedUser}
-              onChange={(e) => setSelectedUser(e.target.value)}
-              label="Felhasználó kiválasztása"
-            >
-              <MenuItem value="">
-                <em>Válassz</em>
-              </MenuItem>
-              {studentsList.map((student) => (
-                <MenuItem key={student} value={student}>
-                  {student}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
+{(roleContext?.role === "SYSADMIN" || roleContext?.role === "CLASSLEADER") && (
+  <Box sx={{ mb: 3 }}>
+    {!showSearchPanel ? (
+      <Button
+        variant="contained"
+        onClick={() => setShowSearchPanel(true)}
+        sx={{ mb: 2 }}
+      >
+        Felhasználó kiválasztása
+      </Button>
+    ) : (
+      <>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+          Felhasználó kiválasztása
+        </Typography>
 
-        {(roleContext?.role === "TEACHER" || roleContext?.role === "SYSADMIN") && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setShowCreateGradeModal(true)}
-            >
-              Új jegy hozzáadása
-            </Button>
+        {!searchInput && (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+            {alphabet.map((letter) => (
+              <Chip
+                key={letter}
+                label={letter}
+                color={activeLetter === letter ? "primary" : "default"}
+                onClick={() =>
+                  setActiveLetter(activeLetter === letter ? null : letter)
+                }
+                sx={{
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                }}
+              />
+            ))}
           </Box>
         )}
 
-        <Dialog
-          open={showCreateGradeModal}
-          onClose={() => setShowCreateGradeModal(false)}
-          fullWidth
-          maxWidth="sm"
-        >
-          <DialogTitle>Új jegy létrehozása</DialogTitle>
-          <DialogContent
-            sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
-          >
-            <FormControl fullWidth>
-              <InputLabel>Diák (email)</InputLabel>
-              <Select
-                value={newGrade.studentEmail}
-                label="Diák (email)"
-                onChange={(e) =>
-                  setNewGrade({ ...newGrade, studentEmail: e.target.value })
-                }
-              >
-                {studentsList.map((student) => (
-                  <MenuItem key={student} value={student}>
-                    {student}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
+        <Autocomplete
+          options={filteredStudents}
+          getOptionLabel={(option) => option}
+          value={selectedUser || null}
+          onChange={(_, value) => setSelectedUser(value || "")}
+          onInputChange={(_, value) => {
+            setSearchInput(value);
+            if (value) setActiveLetter(null);
+          }}
+          renderInput={(params) => (
             <TextField
-              label="Jegy (1-5)"
-              type="number"
-              value={newGrade.value}
-              onChange={(e) =>
-                setNewGrade({ ...newGrade, value: e.target.value })
-              }
-              inputProps={{ min: 1, max: 5 }}
-              fullWidth
+              {...params}
+              label="Felhasználó kiválasztása"
+              placeholder="Kezdj el gépelni vagy válassz betűt..."
             />
+          )}
+          fullWidth
+          clearOnBlur={false}
+          noOptionsText="Nincs találat"
+        />
 
-            <FormControl fullWidth>
-              <InputLabel>Tantárgy</InputLabel>
-              <Select
-                value={newGrade.subject}
-                label="Tantárgy"
-                onChange={(e) =>
-                  setNewGrade({ ...newGrade, subject: e.target.value })
-                }
-              >
-                {fetchedSubjects?.map((subject) => (
-                  <MenuItem key={subject} value={subject}>
-                    {subject}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </DialogContent>
+        <Button
+          onClick={() => setShowSearchPanel(false)}
+          color="secondary"
+          sx={{ mt: 2 }}
+        >
+          Bezárás
+        </Button>
+      </>
+    )}
+  </Box>
+)}
 
-          <DialogActions>
-            <Button onClick={() => setShowCreateGradeModal(false)}>
-              Mégse
-            </Button>
-            <Button
-              variant="contained"
-              onClick={async () => {
-                if (!newGrade.studentEmail || !newGrade.value) {
-                  alert("Tölts ki minden mezőt!");
-                  return;
-                }
-                try {
-                  await gradeAPI.createGrade({
-                    studentEmail: newGrade.studentEmail,
-                    value: parseInt(newGrade.value),
-                    subject: newGrade.subject,
-                  });
-                  alert("Jegy sikeresen hozzáadva!");
-                  setShowCreateGradeModal(false);
-                  refetch();
-                } catch (error) {
-                  console.error(error);
-                  alert("Hiba történt!");
-                }
-              }}
-            >
-              Mentés
-            </Button>
-          </DialogActions>
-        </Dialog>
+
+{(roleContext?.role === "TEACHER" || roleContext?.role === "SYSADMIN") && (
+  <>
+    <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+      <Button
+        variant="contained"
+        startIcon={<AddIcon />}
+        onClick={() => setShowCreateGradeModal(true)}
+      >
+        Új jegy hozzáadása
+      </Button>
+    </Box>
+    <Dialog
+      open={showCreateGradeModal}
+      onClose={() => setShowCreateGradeModal(false)}
+      fullWidth
+      maxWidth="sm"
+    >
+      <DialogTitle>Új jegy hozzáadása</DialogTitle>
+
+      <DialogContent
+        sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+      >
+        {modalShowAlphabet && !modalSearchInput && (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+            {alphabet.map((letter) => (
+              <Chip
+                key={letter}
+                label={letter}
+                color={modalActiveLetter === letter ? "primary" : "default"}
+                onClick={() => {
+                  setModalActiveLetter(letter);
+                  setModalSearchInput("");
+                  setModalShowAlphabet(true);
+                }}
+                sx={{ cursor: "pointer", fontWeight: "bold" }}
+              />
+            ))}
+          </Box>
+        )}
+
+        <Autocomplete
+          options={filteredStudentsForModal}
+          getOptionLabel={(option) => option}
+          value={newGrade.studentEmail || null}
+          onFocus={() => setModalShowAlphabet(true)}
+          onChange={(_, value) =>
+            setNewGrade({ ...newGrade, studentEmail: value || "" })
+          }
+          onInputChange={(_, value) => {
+            setModalSearchInput(value);
+            if (value) setModalActiveLetter(null);
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Diák kiválasztása"
+              placeholder="Kezdj el gépelni vagy válassz betűt..."
+            />
+          )}
+          fullWidth
+          clearOnBlur={false}
+          noOptionsText="Nincs találat"
+        />
+
+        <TextField
+          label="Jegy (1–5)"
+          type="number"
+          value={newGrade.value}
+          onChange={(e) =>
+            setNewGrade({ ...newGrade, value: e.target.value })
+          }
+          inputProps={{ min: 1, max: 5 }}
+          fullWidth
+        />
+
+        <FormControl fullWidth>
+          <InputLabel>Tantárgy</InputLabel>
+          <Select
+            value={newGrade.subject}
+            label="Tantárgy"
+            onChange={(e) =>
+              setNewGrade({ ...newGrade, subject: e.target.value })
+            }
+          >
+            {fetchedSubjects?.map((subject) => (
+              <MenuItem key={subject} value={subject}>
+                {subject}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={() => setShowCreateGradeModal(false)}>Mégse</Button>
+        <Button
+          variant="contained"
+          onClick={async () => {
+            if (!newGrade.studentEmail || !newGrade.value || !newGrade.subject) {
+              alert("Tölts ki minden mezőt!");
+              return;
+            }
+            try {
+              await gradeAPI.createGrade({
+                studentEmail: newGrade.studentEmail,
+                value: parseInt(newGrade.value),
+                subject: newGrade.subject,
+              });
+              alert("Jegy sikeresen hozzáadva!");
+              setShowCreateGradeModal(false);
+              refetch();
+            } catch (error) {
+              console.error(error);
+              alert("Hiba történt!");
+            }
+          }}
+        >
+          Mentés
+        </Button>
+      </DialogActions>
+    </Dialog>
+  </>
+)}
+
 
         {isLoading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
