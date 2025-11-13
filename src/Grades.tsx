@@ -57,29 +57,42 @@ export default function Grades() {
   const alphabet = ["A","Á","B","C","Cs","D","Dz","Dzs","E","É","F","G","Gy","H","I","Í","J","K","L","Ly","M","N",
     "Ny","O","Ó","Ö","Ő","P","Q","R","S","Sz","T","Ty","U","Ú","Ü","Ű","V","W","X","Y","Z","Zs"];
 
-  const filteredStudents = useMemo(() => {
-    if (searchInput) {
-      return studentsList.filter((s) =>
-        s.toLowerCase().includes(searchInput.toLowerCase())
-      );
-    } else if (activeLetter) {
-      return studentsList.filter((s) =>
-        s.split("@")[0][0]?.toUpperCase() === activeLetter
-      );
-    }
-    return [];
-    }, 
-    [studentsList, searchInput, activeLetter]);
+  function getFirstHungarianLetter(name: string) {
+  const nameUpper = name.toUpperCase();
+  const letters = ["CS","DZ","DZS","GY","LY","NY","SZ","TY","ZS"];
+  for (const l of letters) {
+    if (nameUpper.startsWith(l)) return l;
+  }
+  return nameUpper[0];
+}
   
-  const filteredStudentsForModal = useMemo(() => {
+const filteredStudents = useMemo(() => {
+  if (searchInput) {
+    return studentsList.filter((s) =>
+      s.toLowerCase().includes(searchInput.toLowerCase())
+    );
+  } else if (activeLetter) {
+    return studentsList.filter((s) => {
+      const namePart = s.split("@")[0];
+      const firstLetter = getFirstHungarianLetter(namePart);
+      return firstLetter === activeLetter;
+    });
+  }
+  return [];
+}, [studentsList, searchInput, activeLetter]);
+
+  
+const filteredStudentsForModal = useMemo(() => {
   if (modalSearchInput) {
     return studentsList.filter((s) =>
       s.toLowerCase().includes(modalSearchInput.toLowerCase())
     );
   } else if (modalActiveLetter) {
-    return studentsList.filter((s) =>
-      s.split("@")[0][0]?.toUpperCase() === modalActiveLetter
-    );
+    return studentsList.filter((s) => {
+      const namePart = s.split("@")[0];
+      const firstLetter = getFirstHungarianLetter(namePart);
+      return firstLetter === modalActiveLetter;
+    });
   }
   return [];
 }, [studentsList, modalSearchInput, modalActiveLetter]);
