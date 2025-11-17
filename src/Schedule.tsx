@@ -62,6 +62,7 @@ export default function Schedule() {
   const durationList = ["8:00-8:45", "9:00-9:45", "10:00-10:45","11:00-11:45","12:00-12:45","13:00-13:45","14:00-14:45"]
   const isTeacher = roleContext?.role === "TEACHER" ? true : false
   const navigate = useNavigate()
+  const [substituteTeacher, setSubstituteTeacher] = useState<string | null>(null);
   
   const [newCourse, setNewCourse] = useState({
     name: "",
@@ -147,69 +148,68 @@ export default function Schedule() {
 
   const coursesSource = isTeacher ? coursesByTeacher : fetchedCourses;
 
-  useEffect(() => {
-    const courses = coursesSource || [];
-    const durations: string[] = [];
+useEffect(() => {
+  const courses = coursesSource || [];
+  const durations: string[] = [];
+
+  for (const c of courses) {
+    const dur = (c.duration ?? "").toString().trim();
+    if (dur && !durations.includes(dur)) durations.push(dur);
+  }
+
+  const timeToMinutes = (time: string) => {
+    const m = time.match(/(\d{1,2}):(\d{2})/);
+    if (!m) return Number.POSITIVE_INFINITY;
+    return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+  };
+  const startMinutes = (range: string) => {
+    const match = range.match(/(\d{1,2}:\d{2})/);
+    return match ? timeToMinutes(match[1]) : Number.POSITIVE_INFINITY;
+  };
+  const endMinutes = (range: string) => {
+    const matches = range.match(/(\d{1,2}:\d{2})/g);
+    return matches && matches[1] ? timeToMinutes(matches[1]) : Number.POSITIVE_INFINITY;
+  };
+
+  durations.sort((a, b) => {
+    const sa = startMinutes(a);
+    const sb = startMinutes(b);
+    if (sa !== sb) return sa - sb;
+    return endMinutes(a) - endMinutes(b);
+  });
+
+  const mapDayToKey = (day: string): DayKey => {
+    const d = (day || "").toLowerCase().trim();
+    if (d.startsWith("hét")) return "hetfo";
+    if (d.startsWith("ked")) return "kedd";
+    if (d.startsWith("sze")) return "szerda";
+    if (d.startsWith("cs")) return "csutortok";
+    if (d.startsWith("pén") || d.startsWith("pen")) return "pentek";
+    return "kedd";
+  };
+
+  const builtRows: ScheduleRow[] = durations.map((duration) => {
+    const base: ScheduleRow = {
+      duration,
+      hetfo: [],
+      kedd: [],
+      szerda: [],
+      csutortok: [],
+      pentek: [],
+    };
 
     for (const c of courses) {
-      const dur = (c.duration ?? "").toString().trim();
-      if (dur && !durations.includes(dur)) durations.push(dur);
+      if ((c.duration ?? "").toString().trim() !== duration) continue;
+      const key = mapDayToKey(c.day);
+      base[key].push(c);
     }
 
-    // helper to parse times like "9:00-9:45" or "09:00 - 09:45"
-    const timeToMinutes = (time: string) => {
-      const m = time.match(/(\d{1,2}):(\d{2})/);
-      if (!m) return Number.POSITIVE_INFINITY;
-      return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
-    };
-    const startMinutes = (range: string) => {
-      const match = range.match(/(\d{1,2}:\d{2})/);
-      return match ? timeToMinutes(match[1]) : Number.POSITIVE_INFINITY;
-    };
-    const endMinutes = (range: string) => {
-      const matches = range.match(/(\d{1,2}:\d{2})/g);
-      return matches && matches[1] ? timeToMinutes(matches[1]) : Number.POSITIVE_INFINITY;
-    };
+    return base;
+  });
 
-    // sort durations by start time (then by end time)
-    durations.sort((a, b) => {
-      const sa = startMinutes(a);
-      const sb = startMinutes(b);
-      if (sa !== sb) return sa - sb;
-      return endMinutes(a) - endMinutes(b);
-    });
+  setRows(builtRows);
+}, [coursesSource]);
 
-    const mapDayToKey = (day: string): DayKey => {
-      const d = (day || "").toString().toLowerCase().trim();
-      if (d.startsWith("hét") || d === "hetfo" || d === "hétfő") return "hetfo";
-      if (d.startsWith("ked")) return "kedd";
-      if (d.startsWith("sze")) return "szerda";
-      if (d.startsWith("csü") || d.startsWith("csu") || d.startsWith("csüt")) return "csutortok";
-      if (d.startsWith("pén") || d.startsWith("pen")) return "pentek";
-      return "kedd";
-    };
-
-    const builtRows: ScheduleRow[] = durations.map((duration) => {
-      const base: ScheduleRow = {
-        duration,
-        hetfo: [],
-        kedd: [],
-        szerda: [],
-        csutortok: [],
-        pentek: [],
-      };
-
-      for (const c of courses) {
-        if ((c.duration ?? "").toString().trim() !== duration) continue;
-        const key = mapDayToKey(c.day);
-        base[key].push(c);
-      }
-
-      return base;
-    });
-
-    setRows(builtRows);
-  }, [fetchedCourses]);
 
   const handleCellClick = (course: CourseApi) => {
     setSelectedCourse(course);
@@ -677,18 +677,49 @@ export default function Schedule() {
                 <Typography variant="body1">{selectedCourse?.duration}</Typography>
               </Box>
               <Box
-                sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: 'rgba(16,185,129,0.05)',
-                  border: '1px solid rgba(16,185,129,0.1)',
-                }}
-              >
-                <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5 }}>
-                  👨‍🏫 Oktató:
-                </Typography>
-                <Typography variant="body1">{selectedCourse?.teacherName}</Typography>
-              </Box>
+  sx={{
+    p: 2,
+    borderRadius: 2,
+    bgcolor: 'rgba(16,185,129,0.05)',
+    border: '1px solid rgba(16,185,129,0.1)',
+  }}
+>
+  <Typography
+    variant="body2"
+    sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5 }}
+  >
+    👨‍🏫 Oktató:
+  </Typography>
+
+  {roleContext?.role === "SYSADMIN" ? (
+    <FormControl fullWidth size="small">
+      <Select
+        value={substituteTeacher || selectedCourse?.teacherName || ""}
+        onChange={(e) => setSubstituteTeacher(e.target.value)}
+      >
+        {teachersList.map((teacher) => (
+          <MenuItem key={teacher} value={teacher}>
+            {teacher}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  ) : substituteTeacher && substituteTeacher !== selectedCourse?.teacherName ? (
+    <Box>
+      <Typography
+        variant="body1"
+        sx={{ textDecoration: "line-through", color: "error.main" }}
+      >
+        {selectedCourse?.teacherName}
+      </Typography>
+      <Typography variant="body1" sx={{ color: "success.main" }}>
+        helyettesítő: {substituteTeacher}
+      </Typography>
+    </Box>
+  ) : (
+    <Typography variant="body1">{selectedCourse?.teacherName}</Typography>
+  )}
+</Box>
               <Box
                 sx={{
                   p: 2,
@@ -704,11 +735,33 @@ export default function Schedule() {
               </Box>
             </Box>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowModal(false)} variant="contained" color="primary">
-              Bezárás
-            </Button>
-          </DialogActions>
+<DialogActions>
+  <Button onClick={() => setShowModal(false)}>Bezárás</Button>
+
+  {roleContext?.role === "SYSADMIN" &&
+    substituteTeacher &&
+    substituteTeacher !== selectedCourse?.teacherName && (
+      <Button
+        onClick={async () => {
+          try {
+            await courseAPI.updateCourseTeacher(selectedCourse.id, substituteTeacher);
+            alert("Helyettesítő tanár mentve!");
+            setShowModal(false);
+            setSubstituteTeacher(null);
+            navigate(0); // újratöltés
+          } catch (err) {
+            console.error(err);
+            alert("Nem sikerült a helyettesítőt menteni.");
+          }
+        }}
+        variant="contained"
+        color="success"
+      >
+        Mentés
+      </Button>
+    )}
+</DialogActions>
+
         </Dialog>
 
         {/* Delete Menu */}

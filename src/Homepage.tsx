@@ -68,8 +68,6 @@ export default function Homepage() {
     },
     enabled: !!token,
   });
-  console.log(gradesBySubject);
-  
 
   const avgBySubject = useMemo(() => {
     if (!gradesBySubject || gradesBySubject.length === 0) return null;

@@ -58,30 +58,42 @@ export default function Grades() {
     subject: "",
   });
 
+  function getFirstHungarianLetter(name: string) {
+  const nameUpper = name.toUpperCase();
+  const letters = ["CS","DZ","DZS","GY","LY","NY","SZ","TY","ZS"];
+  for (const l of letters) {
+    if (nameUpper.startsWith(l)) return l;
+  }
+  return nameUpper[0];
+}
   
-  const filteredStudents = useMemo(() => {
-    if (searchInput) {
-      return studentsList.filter((s) =>
-        s.toLowerCase().includes(searchInput.toLowerCase())
-      );
-    } else if (activeLetter) {
-      return studentsList.filter((s) =>
-        s.split("@")[0][0]?.toUpperCase() === activeLetter
-      );
-    }
-    return [];
-    }, 
-    [studentsList, searchInput, activeLetter]);
+const filteredStudents = useMemo(() => {
+  if (searchInput) {
+    return studentsList.filter((s) =>
+      s.toLowerCase().includes(searchInput.toLowerCase())
+    );
+  } else if (activeLetter) {
+    return studentsList.filter((s) => {
+      const namePart = s.split("@")[0];
+      const firstLetter = getFirstHungarianLetter(namePart);
+      return firstLetter === activeLetter;
+    });
+  }
+  return [];
+}, [studentsList, searchInput, activeLetter]);
+
   
-  const filteredStudentsForModal = useMemo(() => {
+const filteredStudentsForModal = useMemo(() => {
   if (modalSearchInput) {
     return studentsList.filter((s) =>
       s.toLowerCase().includes(modalSearchInput.toLowerCase())
     );
   } else if (modalActiveLetter) {
-    return studentsList.filter((s) =>
-      s.split("@")[0][0]?.toUpperCase() === modalActiveLetter
-    );
+    return studentsList.filter((s) => {
+      const namePart = s.split("@")[0];
+      const firstLetter = getFirstHungarianLetter(namePart);
+      return firstLetter === modalActiveLetter;
+    });
   }
   return [];
 }, [studentsList, modalSearchInput, modalActiveLetter]);

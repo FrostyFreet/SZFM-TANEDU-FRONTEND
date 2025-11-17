@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import {
   Box,
   Container,
@@ -34,15 +34,40 @@ export default function CreateUser() {
       (roleContext?.role === "SYSADMIN" || roleContext?.role === "TEACHER"),
   });
 
-  const { data: departments = [] } = useQuery({
-    queryKey: ["departments", token],
-    queryFn: async () => {
-      const res = await departmentAPI.getAll();
-      return Array.isArray(res?.data) ? res.data : [];
-    },
-    enabled: !!token,
-    staleTime: 5 * 60 * 1000,
-  });
+const itemLabel = (v: any) => {
+  if (!v && v !== 0) return "";
+  if (typeof v === "string") return v;
+  if (typeof v === "number") return String(v);
+  if (v?.name) return String(v.name);
+  if (v?.email) return String(v.email);
+  if (v?.id) return String(v.id);
+  try { return JSON.stringify(v); } catch { return String(v); }
+};
+
+const { data: fetchedDepartments = [] } = useQuery({
+  queryKey: ["departments", token],
+  queryFn: async () => {
+    const response = await departmentAPI.getAll();
+    if (!Array.isArray(response.data)) return [];
+    return response.data.map((d: any) => ({
+      id: d.id,
+      name: itemLabel(d),
+    }));
+  },
+  enabled: !!token && (roleContext?.role === "SYSADMIN" || roleContext?.role === "TEACHER"),
+});
+
+
+// Lokális state, hogy eltárolja a lekért osztályokat
+const [departments, setDepartments] = useState<any[]>([]);
+
+// Frissítjük, ha új adat jön be
+useEffect(() => {
+  if (fetchedDepartments.length > 0) {
+    setDepartments(fetchedDepartments);
+  }
+}, [fetchedDepartments]);
+
 
   const [form, setForm] = useState({
     email: "",

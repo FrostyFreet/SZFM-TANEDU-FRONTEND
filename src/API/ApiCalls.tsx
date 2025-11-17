@@ -197,6 +197,12 @@ export const courseAPI = {
     axios.delete(`${API_BASE_URL}/course/deleteById/${courseId}`, {
       headers: getAuthHeaders(),
     }),
+
+  updateCourseTeacher: (courseId: number, teacherEmail: string) =>
+    axios.put(`${API_BASE_URL}/course/updateTeacher/${courseId}`, 
+      { teacher: { email: teacherEmail } }, 
+      { headers: getAuthHeaders() }
+    ),
 };
 
 // ============ DEPARTMENT API ============
