@@ -1,14 +1,21 @@
-import { AppBar, Toolbar, IconButton} from "@mui/material";
+import { AppBar, Toolbar, IconButton, Typography} from "@mui/material";
 import { AccountCircle, Logout } from "@mui/icons-material";
 import { useNavigate } from "react-router";
+import useInactivityLogout from "./components/useInactivityLogout";
 
 export default function TopBar() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
+  const secondsLeft = useInactivityLogout(10 * 60 * 1000)
+
+  
   const handleLogout = () => {
     localStorage.removeItem("token");
     window.dispatchEvent(new Event("storage"));
   };
+
+  const minutes = Math.floor(secondsLeft / 60);
+  const seconds = secondsLeft % 60;
 
   return (
     <AppBar
@@ -22,7 +29,11 @@ export default function TopBar() {
         justifyContent: "center",
       }}
     >
+      
       <Toolbar sx={{ justifyContent: "flex-end", gap: 2 }}>
+         <Typography sx={{ color: "#fff" }}>
+          Inaktivitási idő: {minutes}:{seconds.toString().padStart(2, "0")}
+        </Typography>
         <IconButton sx={{ color: "#fff" }} onClick={() => navigate("/adatok")}>
           <AccountCircle />
         </IconButton>
