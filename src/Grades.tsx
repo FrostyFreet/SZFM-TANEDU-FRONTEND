@@ -42,21 +42,23 @@ export default function Grades() {
   const [showCreateGradeModal, setShowCreateGradeModal] = useState(false);
   const [studentsList, setStudentsList] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>("");
-  const [modalActiveLetter, setModalActiveLetter] = useState<string | null>(null);
+  const [modalActiveLetter, setModalActiveLetter] = useState<string | null>("A");
   const [modalSearchInput, setModalSearchInput] = useState<string>("");
   const [modalShowAlphabet, setModalShowAlphabet] = useState(false);
+  const [activeLetter, setActiveLetter] = useState<string | null>("A");
+  const [searchInput, setSearchInput] = useState<string>("");
+  const [showSearchPanel, setShowSearchPanel] = useState(false);
+  
+  const alphabet = ["A","Á","B","C","Cs","D","Dz","Dzs","E","É","F","G","Gy","H","I","Í","J","K","L","Ly","M","N",
+    "Ny","O","Ó","Ö","Ő","P","Q","R","S","Sz","T","Ty","U","Ú","Ü","Ű","V","W","X","Y","Z","Zs"];
 
   const [newGrade, setNewGrade] = useState({
     studentEmail: "",
     value: "",
     subject: "",
   });
-  const [activeLetter, setActiveLetter] = useState<string | null>(null);
-  const [searchInput, setSearchInput] = useState<string>("");
-  const [showSearchPanel, setShowSearchPanel] = useState(false);
-  const alphabet = ["A","Á","B","C","Cs","D","Dz","Dzs","E","É","F","G","Gy","H","I","Í","J","K","L","Ly","M","N",
-    "Ny","O","Ó","Ö","Ő","P","Q","R","S","Sz","T","Ty","U","Ú","Ü","Ű","V","W","X","Y","Z","Zs"];
 
+  
   const filteredStudents = useMemo(() => {
     if (searchInput) {
       return studentsList.filter((s) =>

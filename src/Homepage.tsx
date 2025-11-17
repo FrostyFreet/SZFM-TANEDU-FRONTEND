@@ -68,6 +68,8 @@ export default function Homepage() {
     },
     enabled: !!token,
   });
+  console.log(gradesBySubject);
+  
 
   const avgBySubject = useMemo(() => {
     if (!gradesBySubject || gradesBySubject.length === 0) return null;
@@ -86,7 +88,7 @@ export default function Homepage() {
   const achievements = useMemo(() => {
     if (!gradesRes) return 0;
     const good = gradesRes.filter((g: any) => Number(g.value) >= 5).length;
-    return good || 12;
+    return good || 0;
   }, [gradesRes]);
 
   const daysOrder = ["hétfő", "kedd", "szerda", "csütörtök", "péntek"];
@@ -111,7 +113,6 @@ export default function Homepage() {
       if (dur && !durations.includes(dur)) durations.push(dur);
     }
 
-    // parse "HH:MM-HH:MM" (flexible: "9:00-9:45", "09:00 - 09:45", etc.)
     const timeToMinutes = (time: string) => {
       const m = time.match(/(\d{1,2}):(\d{2})/);
       if (!m) return Number.POSITIVE_INFINITY;
@@ -193,6 +194,8 @@ export default function Homepage() {
     );
   };
 
+  console.log(selectedSubject);
+  
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
       <Container maxWidth="lg" sx={{ mt: 4 }}>
@@ -210,7 +213,7 @@ export default function Homepage() {
                   Tantárgyi átlag
                 </Typography>
                 <Typography variant="h4" sx={{ mt: 1 }}>
-                  {avgBySubject ?? "—"}
+                  {avgBySubject ?? "0.0"}
                 </Typography>
               </CardContent>
             </Card>
