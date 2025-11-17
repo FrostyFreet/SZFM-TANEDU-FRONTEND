@@ -744,7 +744,7 @@ useEffect(() => {
       <Button
         onClick={async () => {
           try {
-            await courseAPI.updateCourseTeacher(selectedCourse.id, substituteTeacher);
+            await courseAPI.updateCourseTeacher(selectedCourse?.id!, substituteTeacher);
             alert("Helyettesítő tanár mentve!");
             setShowModal(false);
             setSubstituteTeacher(null);
