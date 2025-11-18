@@ -1,4 +1,3 @@
-// ...existing code...
 import { useContext, useEffect, useState } from "react";
 import {
   Box,
@@ -69,35 +68,57 @@ export default function Schedule() {
 
 
 useEffect(() => {
-  if (!selectedCourse?.id) return;
+  if (!selectedCourse?.id || !token) return;
 
-  fetch(`/api/mug/status?courseId=${selectedCourse.id}`)
-    .then(res => res.json())
+  fetch(`http://localhost:8080/api/mug/status?courseId=${selectedCourse.id}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Failed to fetch mug status');
+      return res.json();
+    })
     .then(data => {
-      setHasSentMug(data.userSent);
+      setHasSentMug(data.userSent || false);
+    })
+    .catch(err => {
+      console.error('Mug status error:', err);
+      setHasSentMug(false);
     });
-}, [selectedCourse?.id]);
+}, [selectedCourse?.id, token]);
 
 const sendMug = async () => {
-  if (!selectedCourse?.id) return;
+  if (!selectedCourse?.id || !token) return;
 
   setLoadingMug(true);
 
-  await fetch("/api/mug/send", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      courseId: selectedCourse.id
-    })
-  });
+  try {
+    const response = await fetch("http://localhost:8080/api/mug/send", {
+      method: "POST",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        courseId: selectedCourse.id
+      })
+    });
 
-  setHasSentMug(true);
-  setLoadingMug(false);
+    if (!response.ok) {
+      throw new Error('Failed to send mug');
+    }
+
+    setHasSentMug(true);
+    alert('☕ Bögre sikeresen elküldve!');
+  } catch (error) {
+    console.error('Send mug error:', error);
+    alert('Hiba történt a bögre küldése során');
+  } finally {
+    setLoadingMug(false);
+  }
 };
-
-
 
   const [newCourse, setNewCourse] = useState({
     name: "",
@@ -244,6 +265,8 @@ useEffect(() => {
 
   setRows(builtRows);
 }, [coursesSource]);
+
+console.log(fetchedCourses);
 
 
   const handleCellClick = (course: CourseApi) => {
@@ -435,6 +458,8 @@ useEffect(() => {
     );
   };
 
+  console.log(substituteTeacher);
+  
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 6 }}>
       <Container maxWidth="lg">
@@ -819,31 +844,31 @@ useEffect(() => {
             onClick={async () => {
               if (!substituteTeacher) return;
               try {
-  await courseAPI.updateCourseTeacher(selectedCourse!.id, substituteTeacher);
+              await courseAPI.updateCourseSubstituteTeacherById(selectedCourse!.id, substituteTeacher);
 
-  // Frissítjük a selectedCourse állapotot, hogy azonnal látszódjon
-  setSelectedCourse({
-    ...selectedCourse!,
-    substituteTeacher
-  });
+              // Frissítjük a selectedCourse állapotot, hogy azonnal látszódjon
+              setSelectedCourse({
+                ...selectedCourse!,
+                substituteTeacher
+              });
 
-  setShowSubstituteSelector(false);
-  setSubstituteTeacher(null);
-  alert("Helyettesítő tanár beállítva!");
-} catch (err) {
-  console.error(err);
-  alert("Helyettesítő mentése sikertelen.");
-}
+              setShowSubstituteSelector(false);
+              setSubstituteTeacher(null);
+              alert("Helyettesítő tanár beállítva!");
+            } catch (err) {
+              console.error(err);
+              alert("Helyettesítő mentése sikertelen.");
+            }
 
-            }}
-          >
-            Mentés
-          </Button>
-        </Box>
-      )}
-    </Box>
-  )}
-</Box>
+                        }}
+                      >
+                        Mentés
+                      </Button>
+                    </Box>
+                  )}
+                </Box>
+              )}
+            </Box>
 
 
 

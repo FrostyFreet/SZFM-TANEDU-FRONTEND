@@ -199,10 +199,14 @@ export const courseAPI = {
       headers: getAuthHeaders(),
     }),
 
-  updateCourseTeacher: (courseId: number, teacherEmail: string) =>
-    axios.put(`${API_BASE_URL}/course/updateTeacher/${courseId}`, 
-      { teacher: { email: teacherEmail } }, 
-      { headers: getAuthHeaders() }
+  updateCourseSubstituteTeacherById: (courseId: number, teacherEmail: string | null) =>
+    axios.put(
+      `${API_BASE_URL}/course/updateCourseSubstituteTeacherById/${courseId}`,
+      null,
+      {
+        params: { email: teacherEmail },
+        headers: getAuthHeaders(),
+      }
     ),
 };
 
