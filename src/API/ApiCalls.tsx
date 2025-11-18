@@ -165,6 +165,7 @@ export const courseAPI = {
       headers: getAuthHeaders(),
     });
   },
+  
 
   getAllAvailableSubjects:()=>{
     return axios.get(`${API_BASE_URL}/users/getAllAvailableSubjects`, {

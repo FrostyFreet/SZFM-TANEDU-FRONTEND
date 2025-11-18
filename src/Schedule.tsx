@@ -63,7 +63,42 @@ export default function Schedule() {
   const isTeacher = roleContext?.role === "TEACHER" ? true : false
   const navigate = useNavigate()
   const [substituteTeacher, setSubstituteTeacher] = useState<string | null>(null);
-  
+  const [hasSentMug, setHasSentMug] = useState(false);
+  const [loadingMug, setLoadingMug] = useState(false);
+  const [showSubstituteSelector, setShowSubstituteSelector] = useState(false);
+
+
+useEffect(() => {
+  if (!selectedCourse?.id) return;
+
+  fetch(`/api/mug/status?courseId=${selectedCourse.id}`)
+    .then(res => res.json())
+    .then(data => {
+      setHasSentMug(data.userSent);
+    });
+}, [selectedCourse?.id]);
+
+const sendMug = async () => {
+  if (!selectedCourse?.id) return;
+
+  setLoadingMug(true);
+
+  await fetch("/api/mug/send", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      courseId: selectedCourse.id
+    })
+  });
+
+  setHasSentMug(true);
+  setLoadingMug(false);
+};
+
+
+
   const [newCourse, setNewCourse] = useState({
     name: "",
     day: "hétfő",
@@ -676,7 +711,7 @@ useEffect(() => {
                 </Typography>
                 <Typography variant="body1">{selectedCourse?.duration}</Typography>
               </Box>
-              <Box
+<Box
   sx={{
     p: 2,
     borderRadius: 2,
@@ -691,35 +726,127 @@ useEffect(() => {
     👨‍🏫 Oktató:
   </Typography>
 
-  {roleContext?.role === "SYSADMIN" ? (
-    <FormControl fullWidth size="small">
-      <Select
-        value={substituteTeacher || selectedCourse?.teacherName || ""}
-        onChange={(e) => setSubstituteTeacher(e.target.value)}
-      >
-        {teachersList.map((teacher) => (
-          <MenuItem key={teacher} value={teacher}>
-            {teacher}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  ) : substituteTeacher && substituteTeacher !== selectedCourse?.teacherName ? (
+  {/* Ha van helyettesítő tanár */}
+  {selectedCourse?.substituteTeacher && selectedCourse.substituteTeacher !== selectedCourse.teacherName ? (
     <Box>
       <Typography
         variant="body1"
-        sx={{ textDecoration: "line-through", color: "error.main" }}
+        sx={{
+          textDecoration: "line-through",
+          color: "error.main",
+          fontWeight: 600
+        }}
       >
-        {selectedCourse?.teacherName}
+        {selectedCourse.teacherName}
       </Typography>
-      <Typography variant="body1" sx={{ color: "success.main" }}>
-        helyettesítő: {substituteTeacher}
+
+      <Typography
+        variant="body1"
+        sx={{
+          color: "success.main",
+          fontWeight: 700,
+          mt: 0.5
+        }}
+      >
+        helyettes: {selectedCourse.substituteTeacher}
       </Typography>
     </Box>
   ) : (
-    <Typography variant="body1">{selectedCourse?.teacherName}</Typography>
+    <Typography variant="body1">
+      {selectedCourse?.teacherName}
+    </Typography>
+  )}
+
+{/* STUDENT bögre gomb */}
+{roleContext?.role === "STUDENT" && (
+  <Box sx={{ textAlign: "right", mt: 2 }}>
+    {!hasSentMug ? (
+      <Button
+        variant="contained"
+        color="warning"
+        onClick={sendMug}
+        disabled={loadingMug}
+        sx={{
+          background: "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)",
+        }}
+      >
+        ☕ Bögre küldése
+      </Button>
+    ) : (
+      <Typography
+        variant="body2"
+        color="success.main"
+        sx={{ fontWeight: 700 }}
+      >
+        ☕ Bögre elküldve!
+      </Typography>
+    )}
+  </Box>
+)}
+
+
+  {/* SYSADMIN helyettesítő selector */}
+  {roleContext?.role === "SYSADMIN" && (
+    <Box sx={{ mt: 2 }}>
+      {!showSubstituteSelector ? (
+        <Button
+          variant="outlined"
+          color="warning"
+          onClick={() => setShowSubstituteSelector(true)}
+        >
+          Helyettesítés beállítása
+        </Button>
+      ) : (
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <FormControl fullWidth>
+            <InputLabel>Helyettesítő tanár</InputLabel>
+            <Select
+              value={substituteTeacher || ""}
+              onChange={(e) => setSubstituteTeacher(e.target.value)}
+              label="Helyettesítő tanár"
+            >
+              {teachersList.map((teacher) => (
+                <MenuItem key={teacher} value={teacher}>
+                  {teacher}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button
+            variant="contained"
+            color="success"
+            disabled={!substituteTeacher || substituteTeacher === selectedCourse?.teacherName}
+            onClick={async () => {
+              if (!substituteTeacher) return;
+              try {
+  await courseAPI.updateCourseTeacher(selectedCourse!.id, substituteTeacher);
+
+  // Frissítjük a selectedCourse állapotot, hogy azonnal látszódjon
+  setSelectedCourse({
+    ...selectedCourse!,
+    substituteTeacher
+  });
+
+  setShowSubstituteSelector(false);
+  setSubstituteTeacher(null);
+  alert("Helyettesítő tanár beállítva!");
+} catch (err) {
+  console.error(err);
+  alert("Helyettesítő mentése sikertelen.");
+}
+
+            }}
+          >
+            Mentés
+          </Button>
+        </Box>
+      )}
+    </Box>
   )}
 </Box>
+
+
+
               <Box
                 sx={{
                   p: 2,
@@ -737,29 +864,6 @@ useEffect(() => {
           </DialogContent>
 <DialogActions>
   <Button onClick={() => setShowModal(false)}>Bezárás</Button>
-
-  {roleContext?.role === "SYSADMIN" &&
-    substituteTeacher &&
-    substituteTeacher !== selectedCourse?.teacherName && (
-      <Button
-        onClick={async () => {
-          try {
-            await courseAPI.updateCourseTeacher(selectedCourse?.id!, substituteTeacher);
-            alert("Helyettesítő tanár mentve!");
-            setShowModal(false);
-            setSubstituteTeacher(null);
-            navigate(0); // újratöltés
-          } catch (err) {
-            console.error(err);
-            alert("Nem sikerült a helyettesítőt menteni.");
-          }
-        }}
-        variant="contained"
-        color="success"
-      >
-        Mentés
-      </Button>
-    )}
 </DialogActions>
 
         </Dialog>

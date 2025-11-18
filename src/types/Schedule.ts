@@ -5,6 +5,7 @@ export type CourseApi = {
   duration: string;
   teacherName: string;
   departmentName: string;
+  substituteTeacher: string;
 };
 
 export type CourseCell = CourseApi | null;
