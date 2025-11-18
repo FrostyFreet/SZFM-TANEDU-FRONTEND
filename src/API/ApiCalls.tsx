@@ -261,3 +261,11 @@ export const uploadImage = async (file: File) => {
 
   return response.data;
 };
+
+export const mugAPI = {
+  sendMug:(courseId:number) => {
+    axios.post(`${API_BASE_URL}/mug/send`,courseId, {
+        headers: getAuthHeaders(),
+    })
+  }
+}
