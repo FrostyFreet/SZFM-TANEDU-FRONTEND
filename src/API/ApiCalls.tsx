@@ -263,9 +263,13 @@ export const uploadImage = async (file: File) => {
 };
 
 export const mugAPI = {
-  sendMug:(courseId:number) => {
-    axios.post(`${API_BASE_URL}/mug/send`,courseId, {
-        headers: getAuthHeaders(),
-    })
-  }
-}
+  sendMug: (courseId: number) => 
+    axios.post(`${API_BASE_URL}/mug/send`, courseId, {
+      headers: getAuthHeaders(),
+    }),
+
+  getMugStatus: (deptId: number) => 
+    axios.get(`${API_BASE_URL}/mug/status/${deptId}`, {
+      headers: getAuthHeaders(),
+    }),
+};

@@ -23,6 +23,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { userAPI, messageAPI, departmentAPI } from "./API/ApiCalls";
 import type { Conversation, Message } from "./types/Messages";
 import { RoleContext } from "./App";
+import { mugAPI } from "./API/ApiCalls";
 
 
 const renderMessageWithLinks = (text: string) => {
@@ -82,7 +83,17 @@ export default function Messages() {
     },
     enabled: !!token,
   });
-  
+const { data: mugStatus } = useQuery({
+  queryKey: ["mugStatus", currentUserDeptId],
+  enabled: !!currentUserDeptId,   // csak akkor indul, ha már van deptId
+  queryFn: async () => {
+    return (await mugAPI.getMugStatus(currentUserDeptId!)).data;
+  },
+  refetchInterval: 5000,
+});
+
+
+
   const userDeptId = fetchedUserId?.departmentId;
   
   const { data: teachersEmailList = [] } = useQuery({
@@ -124,13 +135,41 @@ export default function Messages() {
   useEffect(() => {
     if (fetchedUserId && fetchedUserId.id) {
       setCurrentUserId(fetchedUserId.id)
-      if (fetchedUserId.deptId){
-        setCurrentUserDeptId(fetchedUserId.deptId)
-      }
+      if (fetchedUserId.departmentId){
+  setCurrentUserDeptId(fetchedUserId.departmentId)
+}
+
     };
   }, [fetchedUserId]);
 
-  
+useEffect(() => {
+  const sendMugMessageToTeacher = async () => {
+    if (!currentUserId || !fetchedUserId) return;
+
+    const teacherEmail = teachersEmailList[0]?.email; // vagy a tényleges címzett
+    if (!teacherEmail) return;
+
+    const alreadySent = conversations.some(c => 
+      c.messages.some(m => m.message.includes("A csoport minden tagja elküldte a bögrét"))
+    );
+    if (alreadySent) return;
+
+    try {
+      await messageAPI.sendMessage(teacherEmail, "A csoport minden tagja elküldte a bögrét.");
+      refetch();
+    } catch (err) {
+      console.error("Mug message send failed:", err);
+    }
+  };
+
+  if (mugStatus?.allSent) {
+    sendMugMessageToTeacher();
+  }
+}, [mugStatus, conversations, teachersEmailList, currentUserId, fetchedUserId]);
+
+
+
+
   const { data: fetchedMessages, isLoading, refetch } = useQuery({
     queryKey: ["messages", token],
     queryFn: async () => {
