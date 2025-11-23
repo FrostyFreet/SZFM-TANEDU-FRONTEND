@@ -6,5 +6,10 @@ export default defineConfig({
   server: {
     host: '0.0.0.0'    
   },
-
+  // @ts-ignore
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: 'src/setupTest.ts',
+  },
 })
